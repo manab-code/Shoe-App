@@ -19,6 +19,8 @@ import PaymentFailed from "./components/PaymentFailed.jsx"
 import UserDashboard from "./components/UserDashboard.jsx"
 import AdminDashboard from "./components/AdminDashboard.jsx"
 
+
+
 const PrivateRoute = ({ children, adminOnly = false }) => {
   const { user, loading, isAdmin } = useAuth()
 
@@ -47,7 +49,7 @@ const App = () => {
       <Route path="/children" element={<Children />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
+<Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/payment/success" element={<PaymentSuccess />} />
       <Route path="/payment/failed" element={<PaymentFailed />} />

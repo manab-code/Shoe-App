@@ -960,12 +960,14 @@ const Home = () => {
 
         <div style={{ width: "50%", position: "relative", backgroundColor: "#f5f5f5", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px", padding: "24px", overflow: "hidden", transform: "translateY(-24px)" }}>
           <div style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%) rotate(180deg)", pointerEvents: "none", userSelect: "none", fontSize: "120px", fontWeight: "900", color: "rgba(0, 0, 0, 0.12)", letterSpacing: "4px", whiteSpace: "nowrap", writingMode: "vertical-rl", textOrientation: "mixed", zIndex: 1 }}>Slick</div>
-          <button
-            type="button"
+          <div
+            role="button"
+            tabIndex={0}
             style={{ background: "transparent", border: "none", outline: "none", padding: 0, margin: 0, cursor: "pointer", textAlign: "center", transition: "transform 0.3s ease, box-shadow 0.3s ease", width: "100%" }}
             onMouseEnter={() => setIsProductHovered(true)}
             onMouseLeave={() => setIsProductHovered(false)}
             onClick={() => console.log('Product clicked')}
+            onKeyDown={(e) => e.key === 'Enter' && console.log('Product clicked')}
             aria-label="View trendy slick pro details"
           >
             <div style={{ position: 'relative', zIndex: 2, border: 'none', backgroundColor: 'transparent' }}>
@@ -1008,7 +1010,7 @@ const Home = () => {
               <div style={{ fontSize: "18px", color: "#666666", marginBottom: '8px', marginTop: 0, textAlign: 'center' }}>{featuredProduct.price}</div>
               <div style={{ fontSize: "20px", fontWeight: "600", color: "#080808", marginBottom: 0, marginTop: 0, textAlign: 'center' }}>{featuredProduct.name}</div>
             </div>
-          </button>
+          </div>
         </div>
       </div>
     </div>

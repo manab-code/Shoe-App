@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
@@ -516,16 +516,12 @@ const Login = () => {
                 </span>
                 Remember me
               </label>
-              <a
-                href="#"
+              <Link
+                to="/forgot-password"
                 className="forgot-link"
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate('/forgot-password');
-                }}
               >
                 Forgot password?
-              </a>
+              </Link>
             </div>
 
             <button type="submit" className="login-btn" disabled={loading}>
@@ -536,16 +532,12 @@ const Login = () => {
 
           <div className="signup-row">
             Don't have an account ?
-            <a
-              href="#"
+            <Link
+              to="/signup"
               className="signup-link"
-              onClick={(e) => {
-                e.preventDefault();
-                navigate('/signup');
-              }}
             >
               Sign Up
-            </a>
+            </Link>
           </div>
         </div>
       </div>

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, CreditCard, Truck } from 'lucide-react';
 
 const PaymentModal = ({ isOpen, onClose, product }) => {
-  const [loading, setLoading] = useState({ esewa: false, khalti: false, cod: false });
-  
+  const [loading, setLoading] = useState({ khalti: false, cod: false });
+  const [selectedMethod, setSelectedMethod] = useState(null);
+
   if (!isOpen || !product) return null;
 
-  const BACKEND_URL = 'http://localhost:8080';
+  // ✅ FIXED: Use import.meta.env for Vite (not process.env)
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
 
   const getToken = () => {
     return localStorage.getItem('token') 
@@ -15,87 +17,25 @@ const PaymentModal = ({ isOpen, onClose, product }) => {
       || '';
   };
 
-  const handleEsewa = async () => {
-    setLoading(prev => ({ ...prev, esewa: true }));
-    try {
-      const amount = parseFloat(product.price.replace(/[^0-9.]/g, ''));
-      if (isNaN(amount) || amount <= 0) throw new Error('Invalid amount');
+  const getAuthHeaders = () => {
+    const token = getToken();
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : ''
+    };
+  };
 
-      const token = getToken();
-      if (!token) {
-        alert('Please login first!');
-        setLoading(prev => ({ ...prev, esewa: false }));
-        return;
-      }
-
-      console.log('Initiating eSewa payment...');
-
-      const response = await fetch(`${BACKEND_URL}/api/payment/esewa/initiate`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          amount,
-          productName: product.name,
-          productId: product.id || product._id,
-        }),
-      });
-
-      const data = await response.json();
-      console.log('Backend response:', data);
-      
-      if (!response.ok) {
-        throw new Error(data.message || data.error || `Server error: ${response.status}`);
-      }
-
-      if (!data.success || !data.payload) {
-        throw new Error(data.message || 'Failed to initiate payment');
-      }
-
-      // Create form and submit to eSewa
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = data.esewa_url;
-      form.target = '_self'; // Important: submit in same window
-      form.style.display = 'none';
-
-      const payload = data.payload;
-      
-      Object.entries(payload).forEach(([key, value]) => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = key;
-        input.value = String(value);
-        form.appendChild(input);
-      });
-
-      document.body.appendChild(form);
-      
-      console.log('Submitting to eSewa:', data.esewa_url);
-      console.log('Payload:', payload);
-      
-      // Small delay to ensure form is in DOM
-      setTimeout(() => {
-        form.submit();
-        // Clean up form after submission
-        setTimeout(() => {
-          if (form.parentNode) form.parentNode.removeChild(form);
-        }, 1000);
-      }, 100);
-      
-    } catch (error) {
-      console.error('eSewa Error:', error);
-      alert('eSewa Error: ' + error.message);
-      setLoading(prev => ({ ...prev, esewa: false }));
-    }
+  const extractAmount = () => {
+    const amount = parseFloat(product.price.replace(/[^0-9.]/g, ''));
+    if (isNaN(amount) || amount <= 0) throw new Error('Invalid product amount');
+    return amount;
   };
 
   const handleKhalti = async () => {
+    setSelectedMethod('khalti');
     setLoading(prev => ({ ...prev, khalti: true }));
     try {
-      const amount = parseFloat(product.price.replace(/[^0-9.]/g, ''));
+      const amount = extractAmount();
       const token = getToken();
       if (!token) {
         alert('Please login first!');
@@ -105,35 +45,40 @@ const PaymentModal = ({ isOpen, onClose, product }) => {
 
       const response = await fetch(`${BACKEND_URL}/api/payment/khalti/initiate`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           amount,
           productName: product.name,
           productId: product.id || product._id,
+          customerName: localStorage.getItem('userName') || 'Customer',
+          customerEmail: localStorage.getItem('userEmail') || 'customer@example.com',
+          customerPhone: localStorage.getItem('userPhone') || '9800000001',
         }),
       });
 
       const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || data.error || `Server error: ${response.status}`);
+      }
+
       if (data.success && data.payment_url) {
         window.location.href = data.payment_url;
       } else {
-        alert('Payment initiation failed: ' + (data.message || 'Unknown error'));
+        throw new Error(data.message || 'Payment initiation failed');
       }
     } catch (error) {
       console.error('Khalti Error:', error);
-      alert('Error: ' + error.message);
-    } finally {
+      alert('Khalti Error: ' + error.message);
       setLoading(prev => ({ ...prev, khalti: false }));
+      setSelectedMethod(null);
     }
   };
 
   const handleCOD = async () => {
+    setSelectedMethod('cod');
     setLoading(prev => ({ ...prev, cod: true }));
     try {
-      const amount = parseFloat(product.price.replace(/[^0-9.]/g, ''));
+      const amount = extractAmount();
       const token = getToken();
       if (!token) {
         alert('Please login first!');
@@ -143,29 +88,33 @@ const PaymentModal = ({ isOpen, onClose, product }) => {
 
       const response = await fetch(`${BACKEND_URL}/api/payment/cod/initiate`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           amount,
           productName: product.name,
           productId: product.id || product._id,
+          customerName: localStorage.getItem('userName') || 'Customer',
+          customerEmail: localStorage.getItem('userEmail') || 'customer@example.com',
+          customerPhone: localStorage.getItem('userPhone') || '9800000001',
         }),
       });
 
       const data = await response.json();
-      
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || `Server error: ${response.status}`);
+      }
+
       if (data.success) {
-        window.location.href = `/payment/success?method=cod&transaction_id=${data.transactionId}`;
+        window.location.href = `/payment/success?method=cod&transaction_id=${data.transactionId}&order_id=${data.orderId}`;
       } else {
-        alert('COD order failed: ' + (data.message || 'Unknown error'));
+        throw new Error(data.message || 'COD order failed');
       }
     } catch (error) {
       console.error('COD Error:', error);
       alert('COD Error: ' + error.message);
-    } finally {
       setLoading(prev => ({ ...prev, cod: false }));
+      setSelectedMethod(null);
     }
   };
 
@@ -182,34 +131,38 @@ const PaymentModal = ({ isOpen, onClose, product }) => {
 
         <div className="payment-options">
           <button 
-            className="payment-option esewa" 
-            onClick={handleEsewa}
-            disabled={loading.esewa}
-          >
-            {loading.esewa ? <Loader2 size={18} className="spin" /> : <span>📱</span>}
-            {loading.esewa ? 'Redirecting...' : 'eSewa'}
-          </button>
-          <button 
-            className="payment-option khalti" 
+            className={`payment-option khalti ${selectedMethod === 'khalti' ? 'selected' : ''}`}
             onClick={handleKhalti}
-            disabled={loading.khalti}
+            disabled={loading.khalti || loading.cod}
           >
-            {loading.khalti ? <Loader2 size={18} className="spin" /> : <span>💳</span>}
-            {loading.khalti ? 'Redirecting...' : 'Khalti'}
+            {loading.khalti ? (
+              <Loader2 size={18} className="spin" />
+            ) : (
+              <CreditCard size={18} />
+            )}
+            {loading.khalti ? 'Redirecting to Khalti...' : 'Pay with Khalti'}
           </button>
+
           <button 
-            className="payment-option cod" 
+            className={`payment-option cod ${selectedMethod === 'cod' ? 'selected' : ''}`}
             onClick={handleCOD}
-            disabled={loading.cod}
+            disabled={loading.khalti || loading.cod}
           >
-            {loading.cod ? <Loader2 size={18} className="spin" /> : <span>💵</span>}
-            {loading.cod ? 'Processing...' : 'Cash on Delivery'}
+            {loading.cod ? (
+              <Loader2 size={18} className="spin" />
+            ) : (
+              <Truck size={18} />
+            )}
+            {loading.cod ? 'Placing order...' : 'Cash on Delivery'}
           </button>
         </div>
+
+        <p className="payment-note">
+          🔒 Your payment is secured with industry-standard encryption
+        </p>
       </div>
 
-      <style>{`
-        .payment-overlay {
+      <style>{`        .payment-overlay {
           position: fixed;
           inset: 0;
           background: rgba(0,0,0,0.5);
@@ -218,6 +171,7 @@ const PaymentModal = ({ isOpen, onClose, product }) => {
           align-items: center;
           justify-content: center;
           padding: 16px;
+          backdrop-filter: blur(4px);
         }
         .payment-modal {
           background: #fff;
@@ -228,6 +182,11 @@ const PaymentModal = ({ isOpen, onClose, product }) => {
           position: relative;
           text-align: center;
           box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+          animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         .payment-close {
           position: absolute;
@@ -242,6 +201,10 @@ const PaymentModal = ({ isOpen, onClose, product }) => {
           align-items: center;
           justify-content: center;
           cursor: pointer;
+          transition: background 0.2s;
+        }
+        .payment-close:hover {
+          background: #e5e7eb;
         }
         .payment-title {
           font-size: 22px;
@@ -255,7 +218,7 @@ const PaymentModal = ({ isOpen, onClose, product }) => {
           margin: 0 0 8px;
         }
         .payment-amount {
-          font-size: 20px;
+          font-size: 24px;
           font-weight: 700;
           color: #111;
           margin: 0 0 24px;
@@ -266,9 +229,9 @@ const PaymentModal = ({ isOpen, onClose, product }) => {
           gap: 12px;
         }
         .payment-option {
-          padding: 14px;
-          border: 1px solid #e5e7eb;
-          border-radius: 12px;
+          padding: 16px;
+          border: 2px solid #e5e7eb;
+          border-radius: 14px;
           background: #fafafa;
           font-size: 16px;
           font-weight: 600;
@@ -278,25 +241,29 @@ const PaymentModal = ({ isOpen, onClose, product }) => {
           align-items: center;
           justify-content: center;
           gap: 10px;
+          color: #374151;
         }
         .payment-option:disabled {
           opacity: 0.6;
           cursor: not-allowed;
         }
-        .payment-option.esewa:hover:not(:disabled) {
-          background: #60bb46;
-          color: white;
-          border-color: #60bb46;
-        }
-        .payment-option.khalti:hover:not(:disabled) {
+        .payment-option.khalti:hover:not(:disabled),
+        .payment-option.khalti.selected {
           background: #5c2d91;
           color: white;
           border-color: #5c2d91;
         }
-        .payment-option.cod:hover:not(:disabled) {
+        .payment-option.cod:hover:not(:disabled),
+        .payment-option.cod.selected {
           background: #f59e0b;
           color: white;
           border-color: #f59e0b;
+        }
+        .payment-note {
+          font-size: 12px;
+          color: #9ca3af;
+          margin-top: 16px;
+          margin-bottom: 0;
         }
         @keyframes spin {
           to { transform: rotate(360deg); }
