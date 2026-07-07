@@ -56,10 +56,10 @@ const Login = () => {
 
       login(data.token, data.user);
 
-      if (data.user.role === 'admin') {
+                if (data.user.role === 'admin') {
         navigate('/dashboard');
       } else {
-        navigate('/store');
+        navigate('/');
       }
 
     } catch (err) {

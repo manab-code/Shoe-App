@@ -400,18 +400,27 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
                   e.currentTarget.style.transform = 'translateY(0)';
                   e.currentTarget.style.boxShadow = 'none';
                 }}>
-                  <img src={item.image} alt={item.name} style={{
-                    width: '70px',
-                    height: '70px',
-                    objectFit: 'contain',
-                    borderRadius: '10px',
-                    background: '#fff',
-                  }} onError={(e) => { e.target.style.display = 'none'; }} />
+                  <img
+                    src={item.imageUrl || item.image || '/placeholder.png'}
+                    alt={item.name}
+                    style={{
+                      width: '70px',
+                      height: '70px',
+                      objectFit: 'contain',
+                      borderRadius: '10px',
+                      background: '#fff',
+                    }}
+                    onError={(e) => { e.target.src = '/placeholder.png'; }}
+                  />
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                     <h4 style={{ margin: '0 0 6px', fontSize: '14px', fontWeight: 600, color: '#111' }}>{item.name}</h4>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '14px', fontWeight: 700, color: '#111' }}>{item.price}</span>
-                      <span style={{ fontSize: '12px', color: '#9ca3af', textDecoration: 'line-through' }}>{item.oldPrice}</span>
+                      <span style={{ fontSize: '14px', fontWeight: 700, color: '#111' }}>
+                        {typeof item.price === 'number' ? `₹${item.price}` : item.price}
+                      </span>
+                      <span style={{ fontSize: '12px', color: '#9ca3af', textDecoration: 'line-through' }}>
+                        {typeof item.oldPrice === 'number' ? `₹${item.oldPrice}` : (item.oldPrice || (typeof item.price === 'number' ? `₹${item.price * 1.2}` : ''))}
+                      </span>
                     </div>
                   </div>
                   <button onClick={() => onRemoveItemRef.current(index)} style={{
@@ -560,9 +569,10 @@ const Home = () => {
   const featuredProduct = {
     id: 'featured-1',
     name: 'Trendy Slick Pro',
-    price: '₱ 3999.00',
-    oldPrice: '₱ 5499.00',
-    image: 'shoe.png',
+    price: 3999,
+    oldPrice: 4999,
+    image: '/shoe.png',
+    imageUrl: '/shoe.png',
     isNew: true,
   };
 
@@ -623,7 +633,13 @@ const Home = () => {
 
   const addToCart = useCallback((product) => {
     const existingCart = JSON.parse(localStorage.getItem('cartItems')) || [];
-    const updatedCart = [...existingCart, { ...product, cartId: Date.now() }];
+    const cartItem = {
+      ...product,
+      cartId: Date.now(),
+      imageUrl: product.imageUrl || product.image,
+      image: product.image || product.imageUrl,
+    };
+    const updatedCart = [...existingCart, cartItem];
     localStorage.setItem('cartItems', JSON.stringify(updatedCart));
     setCartItems(updatedCart);
     setCartCount(updatedCart.length);
@@ -714,16 +730,20 @@ const Home = () => {
             </button>
             <div className="search-popup-image-wrapper">
               <img
-                src={selectedProduct.image}
+                src={selectedProduct.imageUrl || selectedProduct.image}
                 alt={selectedProduct.name}
                 className="search-popup-image"
-                onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/220x160?text=Shoe'; }}
+                onError={(e) => { e.currentTarget.src = '/placeholder.png'; }}
               />
             </div>
             <h3 className="search-popup-name">{selectedProduct.name}</h3>
             <div className="search-popup-pricing">
-              <span className="search-popup-price">{selectedProduct.price}</span>
-              <span className="search-popup-old-price">{selectedProduct.oldPrice}</span>
+              <span className="search-popup-price">
+                {typeof selectedProduct.price === 'number' ? `₹${selectedProduct.price}` : selectedProduct.price}
+              </span>
+              <span className="search-popup-old-price">
+                {typeof selectedProduct.oldPrice === 'number' ? `₹${selectedProduct.oldPrice}` : selectedProduct.oldPrice}
+              </span>
             </div>
             {popupAddedMessage && (
               <div className="search-popup-added-msg">
@@ -880,7 +900,7 @@ const Home = () => {
       <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "24px 32px", position: "relative", zIndex: 20 }}>
         <div style={{ fontSize: "24px", fontWeight: "700", cursor: "pointer", letterSpacing: "-0.8px" }} onClick={() => navigate("/")}>Slick</div>
         <div style={{ display: "flex", gap: "24px", alignItems: "center", position: "relative", zIndex: 50 }}>
-          
+
           {/* Search */}
           <button
             type="button"
@@ -985,7 +1005,7 @@ const Home = () => {
             aria-label="View trendy slick pro details"
           >
             <div style={{ position: 'relative', zIndex: 2, border: 'none', backgroundColor: 'transparent' }}>
-              <img src="shoe.png" alt="Shoe" style={{ width: "360px", height: "auto", objectFit: "contain", border: "none", filter: "drop-shadow(0 25px 25px rgba(0, 0, 0, 0.15))", transition: "transform 0.5s ease", transform: isProductHovered ? "translateY(-8px) scale(1.02)" : "translateY(0)" }} />
+              <img src="/shoe.png" alt="Shoe" style={{ width: "360px", height: "auto", objectFit: "contain", border: "none", filter: "drop-shadow(0 25px 25px rgba(0, 0, 0, 0.15))", transition: "transform 0.5s ease", transform: isProductHovered ? "translateY(-8px) scale(1.02)" : "translateY(0)" }} />
               <button
                 type="button"
                 style={{
@@ -1021,7 +1041,7 @@ const Home = () => {
               </button>
             </div>
             <div style={{ position: 'relative', marginTop: '12px', textAlign: 'center' }}>
-              <div style={{ fontSize: "18px", color: "#666666", marginBottom: '8px', marginTop: 0, textAlign: 'center' }}>{featuredProduct.price}</div>
+              <div style={{ fontSize: "18px", color: "#666666", marginBottom: '8px', marginTop: 0, textAlign: 'center' }}>₹{featuredProduct.price}</div>
               <div style={{ fontSize: "20px", fontWeight: "600", color: "#080808", marginBottom: 0, marginTop: 0, textAlign: 'center' }}>{featuredProduct.name}</div>
             </div>
           </div>

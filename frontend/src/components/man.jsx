@@ -137,7 +137,7 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
                   }}
                 >
                   <img
-                    src={item.image}
+                    src={item.imageUrl || item.image || '/placeholder.png'}
                     alt={item.name}
                     style={{
                       width: '70px',
@@ -146,7 +146,7 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
                       borderRadius: '10px',
                       background: '#fff',
                     }}
-                    onError={(e) => { e.target.style.display = 'none'; }}
+                    onError={(e) => { e.target.src = '/placeholder.png'; }}
                   />
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                     <h4 style={{ margin: '0 0 6px', fontSize: '14px', fontWeight: 600, color: '#111' }}>
@@ -154,10 +154,10 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
                     </h4>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ fontSize: '14px', fontWeight: 700, color: '#111' }}>
-                        {item.price}
+                        ₹{item.price}
                       </span>
                       <span style={{ fontSize: '12px', color: '#9ca3af', textDecoration: 'line-through' }}>
-                        {item.oldPrice}
+                        ₹{item.oldPrice || item.price * 1.2}
                       </span>
                     </div>
                   </div>
