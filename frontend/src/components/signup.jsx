@@ -18,7 +18,7 @@ const handleSignUp = async (e) => {
     setLoading(true);
 
     const response = await fetch(
-      "http://localhost:8080/api/auth/signup",
+       "http://localhost:8080/signup",
       {
         method: "POST",
         headers: {

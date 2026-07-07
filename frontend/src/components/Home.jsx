@@ -43,7 +43,6 @@ const allProducts = [...bestSellingProducts, ...manProducts, ...womenProducts, .
 
 // ─── Logout Modal ───────────────────────────────────────────────────────────
 const LogoutModal = ({ onConfirm, onCancel }) => {
-  // ... (same as before – keep unchanged)
   const overlayStyle = {
     position: 'fixed',
     inset: 0,
@@ -112,7 +111,7 @@ const LogoutModal = ({ onConfirm, onCancel }) => {
   );
 };
 
-// ─── Search Bar Overlay (opens popup on product click) ────────────────────
+// ─── Search Bar Overlay ────────────────────────────────────────────────────
 const SearchBar = ({ isOpen, onClose, products, onProductSelect }) => {
   const [query, setQuery] = useState('');
   const inputRef = useRef(null);
@@ -218,7 +217,6 @@ const SearchBar = ({ isOpen, onClose, products, onProductSelect }) => {
             </button>
           </div>
 
-          {/* Results */}
           {query.trim() !== '' && (
             <div style={{
               marginTop: '12px',
@@ -278,7 +276,6 @@ const SearchBar = ({ isOpen, onClose, products, onProductSelect }) => {
 
 // ─── Cart Drawer ─────────────────────────────────────────────────────────────
 const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
-  // ... (same as before – keep unchanged)
   const drawerRef = useRef(null);
   const onCloseRef = useRef(onClose);
   const onRemoveItemRef = useRef(onRemoveItem);
@@ -313,7 +310,6 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
   if (!isOpen) return null;
 
   return (
-    // ... (full CartDrawer JSX – same as before)
     <>
       <style>{`
         @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
@@ -478,7 +474,6 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
 
 // ─── User dropdown ────────────────────────────────────────────────────────────
 const UserDropdown = ({ user, onLogoutClick, onClose }) => {
-  // ... (same as before – keep unchanged)
   const dropdownRef = useRef(null);
   useEffect(() => {
     const handler = (e) => {
@@ -559,11 +554,9 @@ const Home = () => {
   const [cartCount, setCartCount] = useState(0);
   const [addedMessage, setAddedMessage] = useState('');
 
-  // ─── Popup state ──────────────────────────────────────────────────────────
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [popupAddedMessage, setPopupAddedMessage] = useState('');
 
-  // Featured product for the home shoe
   const featuredProduct = {
     id: 'featured-1',
     name: 'Trendy Slick Pro',
@@ -628,7 +621,6 @@ const Home = () => {
     navigate('/login');
   };
 
-  // Add to cart (used for both featured shoe and popup)
   const addToCart = useCallback((product) => {
     const existingCart = JSON.parse(localStorage.getItem('cartItems')) || [];
     const updatedCart = [...existingCart, { ...product, cartId: Date.now() }];
@@ -640,7 +632,6 @@ const Home = () => {
     setTimeout(() => setAddedMessage(''), 1500);
   }, []);
 
-  // For popup add to cart – uses the same function but we also clear popup message
   const handlePopupAddToCart = (product) => {
     addToCart(product);
     setPopupAddedMessage('Added to cart!');
@@ -670,7 +661,6 @@ const Home = () => {
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#ffffff", fontFamily: "Poppins, sans-serif", position: "relative" }}>
 
-      {/* Search Bar Overlay */}
       <SearchBar
         isOpen={searchOpen}
         onClose={handleCloseSearch}
@@ -678,7 +668,6 @@ const Home = () => {
         onProductSelect={handleProductSelect}
       />
 
-      {/* Cart Drawer */}
       <CartDrawer
         isOpen={cartOpen}
         onClose={handleCloseCart}
@@ -686,7 +675,6 @@ const Home = () => {
         onRemoveItem={handleRemoveFromCart}
       />
 
-      {/* Logout Modal */}
       {showLogoutModal && (
         <LogoutModal
           onConfirm={handleLogoutConfirm}
@@ -694,7 +682,6 @@ const Home = () => {
         />
       )}
 
-      {/* Toast notification for featured shoe add */}
       {addedMessage && (
         <div style={{
           position: 'fixed',
@@ -715,7 +702,6 @@ const Home = () => {
         </div>
       )}
 
-      {/* ─── Product Popup (from search) ────────────────────────────────── */}
       {selectedProduct && (
         <div className="search-popup-overlay" onClick={() => setSelectedProduct(null)}>
           <div className="search-popup" onClick={(e) => e.stopPropagation()}>
@@ -760,7 +746,6 @@ const Home = () => {
         </div>
       )}
 
-      {/* ─── Popup styles ────────────────────────────────────────────────── */}
       <style>{`
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(24px); }
@@ -770,14 +755,13 @@ const Home = () => {
           from { opacity: 0; transform: translateX(-40px); }
           to { opacity: 1; transform: translateX(0); }
         }
-        /* ── Search popup styles ── */
         .search-popup-overlay {
           position: fixed;
           inset: 0;
           background: rgba(0, 0, 0, 0.45);
           display: flex;
-          align-items: center;
-          justify-content: center;
+          alignItems: center;
+          justifyContent: center;
           z-index: 1001;
           padding: 16px;
           animation: fadeIn 0.15s ease;
@@ -896,6 +880,8 @@ const Home = () => {
       <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "24px 32px", position: "relative", zIndex: 20 }}>
         <div style={{ fontSize: "24px", fontWeight: "700", cursor: "pointer", letterSpacing: "-0.8px" }} onClick={() => navigate("/")}>Slick</div>
         <div style={{ display: "flex", gap: "24px", alignItems: "center", position: "relative", zIndex: 50 }}>
+          
+          {/* Search */}
           <button
             type="button"
             aria-label="Search"
@@ -907,6 +893,7 @@ const Home = () => {
             <Search size={20} color="#374151" />
           </button>
 
+          {/* Cart */}
           <button
             type="button"
             aria-label="Cart"
@@ -921,6 +908,33 @@ const Home = () => {
             )}
           </button>
 
+          {/* ADMIN BUTTON — only for admin users */}
+          {user?.role === 'admin' && (
+            <button
+              onClick={() => navigate('/dashboard')}
+              style={{
+                background: '#111',
+                color: '#fff',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontFamily: 'Poppins, sans-serif',
+                transition: 'background 0.2s, transform 0.15s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#333'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#111'; e.currentTarget.style.transform = 'translateY(0)'; }}
+            >
+              ⚙️ Admin
+            </button>
+          )}
+
+          {/* User */}
           <div style={{ position: 'relative' }}>
             <button
               type="button"
@@ -943,7 +957,7 @@ const Home = () => {
         </div>
       </nav>
 
-      {/* Main Content – unchanged */}
+      {/* Main Content */}
       <div style={{ display: "flex", minHeight: "calc(100vh - 96px)", position: "relative", backgroundColor: "#f7f3f3", alignItems: "flex-start", paddingTop: "24px", animation: 'fadeInUp 0.8s ease forwards' }}>
         <div style={{ width: "50%", padding: "32px 32px 32px 10px", display: "flex", flexDirection: "column", justifyContent: "flex-start", paddingTop: "48px", opacity: showLeftSlide ? 1 : 0, transform: showLeftSlide ? "translateX(0)" : "translateX(-40px)", transition: "all 0.8s ease", zIndex: 10 }}>
           <h1 style={{ fontSize: "60px", fontWeight: "700", color: "#090909", lineHeight: "1.1", marginBottom: "24px", marginTop: 0 }}>Find Your Sole Mate With Us</h1>
