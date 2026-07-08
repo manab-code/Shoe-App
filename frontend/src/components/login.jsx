@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { API_URL, GOOGLE_CLIENT_ID, FACEBOOK_APP_ID } from '../config/api';
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [tooltip, setTooltip] = useState({ show: false, text: '', x: 0, y: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -34,34 +33,40 @@ const Login = () => {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  // ==================== EMAIL LOGIN ====================
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-     const response = await fetch('http://localhost:8080/login',  {
+      const response = await fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'login',
+          email,
+          password,
+        }),
       });
 
       const data = await response.json();
 
-      if (!response.ok) {
+      if (!data.success) {
         setError(data.message || 'Login failed');
         setLoading(false);
         return;
       }
 
       login(data.token, data.user);
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
 
-                if (data.user.role === 'admin') {
+      if (data.user.role === 'admin') {
         navigate('/dashboard');
       } else {
         navigate('/');
       }
-
     } catch (err) {
       setError('Unable to reach the server. Please check your connection.');
     } finally {
@@ -69,6 +74,108 @@ const Login = () => {
     }
   };
 
+  // ==================== GOOGLE LOGIN ====================
+  const handleGoogleLogin = () => {
+    if (!window.google) {
+      alert('Google SDK not loaded yet. Please wait...');
+      return;
+    }
+
+    const client = window.google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: 'email profile',
+      callback: async (tokenResponse) => {
+        try {
+          const userInfo = await fetch(
+            'https://www.googleapis.com/oauth2/v3/userinfo',
+            {
+              headers: {
+                Authorization: `Bearer ${tokenResponse.access_token}`,
+              },
+            }
+          ).then((res) => res.json());
+
+          const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: 'googleAuth',
+              name: userInfo.name,
+              email: userInfo.email,
+              googleId: userInfo.sub,
+              picture: userInfo.picture,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            login(data.token, data.user);
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            navigate(data.user.role === 'admin' ? '/dashboard' : '/');
+          } else {
+            setError(data.message);
+          }
+        } catch (err) {
+          setError('Google login failed. Please try again.');
+        }
+      },
+    });
+    client.requestAccessToken();
+  };
+
+  // ==================== FACEBOOK LOGIN ====================
+  const handleFacebookLogin = () => {
+    if (!window.FB) {
+      alert('Facebook SDK not loaded yet. Please wait...');
+      return;
+    }
+
+    window.FB.login(
+      (response) => {
+        if (response.authResponse) {
+          window.FB.api(
+            '/me',
+            { fields: 'name,email,picture' },
+            async (userInfo) => {
+              try {
+                const res = await fetch(API_URL, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                  body: JSON.stringify({
+                    action: 'facebookAuth',
+                    name: userInfo.name,
+                    email: userInfo.email,
+                    facebookId: userInfo.id,
+                    picture: userInfo.picture?.data?.url,
+                  }),
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                  login(data.token, data.user);
+                  localStorage.setItem('token', data.token);
+                  localStorage.setItem('user', JSON.stringify(data.user));
+                  navigate(data.user.role === 'admin' ? '/dashboard' : '/');
+                } else {
+                  setError(data.message);
+                }
+              } catch (err) {
+                setError('Facebook login failed. Please try again.');
+              }
+            }
+          );
+        } else {
+          setError('Facebook login was cancelled');
+        }
+      },
+      { scope: 'email,public_profile' }
+    );
+  };
+
+  // ==================== SHOE CLICK HANDLER ====================
   const handleShoeClick = (e, productName) => {
     const element = e.currentTarget;
     const rect = element.getBoundingClientRect();
@@ -89,15 +196,45 @@ const Login = () => {
     element.appendChild(ripple);
     setTimeout(() => ripple.remove(), 600);
 
-    setTooltip({ show: true, text: productName, x: e.clientX + 10, y: e.clientY - 40 });
-    setTimeout(() => setTooltip(prev => ({ ...prev, show: false })), 2000);
-
     const isLeft = element.classList.contains('shoe-top-left');
     element.style.transform = isLeft
       ? 'rotate(-8deg) scale(0.9) translateY(5px)'
       : 'rotate(6deg) scale(0.9) translateY(5px)';
-    setTimeout(() => { element.style.transform = ''; }, 200);
+    setTimeout(() => {
+      element.style.transform = '';
+    }, 200);
   };
+
+  // ==================== LOAD SDKs ====================
+  useEffect(() => {
+    const googleScript = document.createElement('script');
+    googleScript.src = 'https://accounts.google.com/gsi/client';
+    googleScript.async = true;
+    googleScript.defer = true;
+    document.body.appendChild(googleScript);
+
+    const fbScript = document.createElement('script');
+    fbScript.src = 'https://connect.facebook.net/en_US/sdk.js';
+    fbScript.async = true;
+    fbScript.defer = true;
+    fbScript.crossOrigin = 'anonymous';
+    fbScript.onload = () => {
+      window.fbAsyncInit = () => {
+        window.FB.init({
+          appId: FACEBOOK_APP_ID || '0',
+          cookie: true,
+          xfbml: true,
+          version: 'v18.0',
+        });
+      };
+    };
+    document.body.appendChild(fbScript);
+
+    return () => {
+      document.body.removeChild(googleScript);
+      document.body.removeChild(fbScript);
+    };
+  }, []);
 
   return (
     <>
@@ -105,17 +242,14 @@ const Login = () => {
         @keyframes shoeRipple {
           to { transform: scale(4); opacity: 0; }
         }
-
         @keyframes shoeEnterTL {
           0%   { transform: rotate(-15deg) translateY(-50px) translateX(-50px); opacity: 0; }
-          100% { transform: rotate(-15deg) translateY(0) translateX(0);         opacity: 1; }
+          100% { transform: rotate(-15deg) translateY(0) translateX(0); opacity: 1; }
         }
-
         @keyframes shoeEnterBR {
           0%   { transform: rotate(10deg) translateY(50px) translateX(50px); opacity: 0; }
-          100% { transform: rotate(10deg) translateY(0) translateX(0);       opacity: 1; }
+          100% { transform: rotate(10deg) translateY(0) translateX(0); opacity: 1; }
         }
-
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
           20%       { transform: translateX(-6px); }
@@ -123,14 +257,8 @@ const Login = () => {
           60%       { transform: translateX(-4px); }
           80%       { transform: translateX(4px); }
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body, #root {
-          background: #f5f0f0;
-          min-height: 100vh;
-        }
-
+        body, #root { background: #f5f0f0; min-height: 100vh; }
         .login-page {
           min-height: 100vh;
           background: #f5f0f0;
@@ -141,7 +269,6 @@ const Login = () => {
           overflow: hidden;
           font-family: 'Poppins', sans-serif;
         }
-
         .shoe-top-left {
           position: absolute;
           top: -20px; left: -30px;
@@ -152,17 +279,12 @@ const Login = () => {
           z-index: 1;
           filter: drop-shadow(4px 8px 12px rgba(241, 233, 233, 0.15));
           user-select: none;
-          -webkit-user-drag: none;
           animation: shoeEnterTL 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
         .shoe-top-left:hover {
           transform: rotate(-5deg) scale(1.15) translateY(-10px) translateX(5px) !important;
           filter: drop-shadow(8px 16px 24px rgba(244, 236, 236, 0.25)) brightness(1.05);
         }
-        .shoe-top-left:active {
-          transform: rotate(-8deg) scale(0.95) translateY(5px) !important;
-        }
-
         .shoe-bottom-right {
           position: absolute;
           bottom: -20px; right: -30px;
@@ -173,7 +295,6 @@ const Login = () => {
           z-index: 1;
           filter: drop-shadow(-4px 8px 12px rgba(255, 252, 252, 0.15));
           user-select: none;
-          -webkit-user-drag: none;
           animation: shoeEnterBR 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s forwards;
           opacity: 0;
         }
@@ -181,10 +302,6 @@ const Login = () => {
           transform: rotate(2deg) scale(1.15) translateY(-10px) translateX(-5px) !important;
           filter: drop-shadow(-8px 16px 24px rgba(255, 250, 250, 0.25)) brightness(1.05);
         }
-        .shoe-bottom-right:active {
-          transform: rotate(6deg) scale(0.95) translateY(5px) !important;
-        }
-
         .login-card {
           background: #ffffff;
           border-radius: 28px;
@@ -196,7 +313,6 @@ const Login = () => {
           box-shadow: 0 20px 60px rgba(10, 10, 10, 0.08);
           margin: 20px;
         }
-
         .login-title {
           text-align: center;
           font-size: 36px;
@@ -205,7 +321,6 @@ const Login = () => {
           margin-bottom: 32px;
           letter-spacing: -0.5px;
         }
-
         .error-banner {
           background: #fff0f0;
           border: 1.5px solid #ffcccc;
@@ -219,12 +334,7 @@ const Login = () => {
           gap: 8px;
           animation: shake 0.4s ease;
         }
-
-        .input-group {
-          position: relative;
-          margin-bottom: 16px;
-        }
-
+        .input-group { position: relative; margin-bottom: 16px; }
         .input-icon {
           position: absolute;
           left: 18px;
@@ -233,9 +343,7 @@ const Login = () => {
           font-size: 17px;
           color: #888;
           pointer-events: none;
-          transition: color 0.25s ease;
         }
-
         .login-input {
           width: 100%;
           padding: 16px 48px 16px 48px;
@@ -246,25 +354,12 @@ const Login = () => {
           background: #fafafa;
           outline: none;
           font-family: 'Poppins', sans-serif;
-          transition: border-color 0.25s ease, box-shadow 0.25s ease,
-                      background 0.25s ease, transform 0.2s ease;
+          transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease, transform 0.2s ease;
         }
         .login-input::placeholder { color: #aaaaaa; }
-        .login-input:hover {
-          border-color: #b0b0b0;
-          background: #f0f0f0;
-          transform: scale(1.01);
-        }
-        .login-input:focus {
-          border-color: #111111;
-          box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.08);
-          background: #ffffff;
-          transform: scale(1.01);
-        }
-        .login-input:focus + .input-icon,
-        .input-group:hover .input-icon { color: #111; }
+        .login-input:hover { border-color: #b0b0b0; background: #f0f0f0; transform: scale(1.01); }
+        .login-input:focus { border-color: #111111; box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.08); background: #ffffff; transform: scale(1.01); }
         .login-input:disabled { opacity: 0.6; cursor: not-allowed; }
-
         .eye-toggle {
           position: absolute;
           right: 16px;
@@ -276,20 +371,14 @@ const Login = () => {
           font-size: 17px;
           color: #888;
           padding: 4px;
-          transition: color 0.2s ease, transform 0.2s ease;
         }
-        .eye-toggle:hover {
-          color: #111;
-          transform: translateY(-50%) scale(1.15);
-        }
-
+        .eye-toggle:hover { color: #111; transform: translateY(-50%) scale(1.15); }
         .login-options {
           display: flex;
           align-items: center;
           justify-content: space-between;
           margin: 18px 0 28px;
         }
-
         .remember-label {
           display: flex;
           align-items: center;
@@ -299,7 +388,6 @@ const Login = () => {
           color: #555;
           user-select: none;
         }
-
         .custom-checkbox {
           width: 18px;
           height: 18px;
@@ -308,22 +396,13 @@ const Login = () => {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-          flex-shrink: 0;
         }
-        .remember-label:hover .custom-checkbox {
-          border-color: #888;
-          transform: scale(1.1);
-        }
-
         .forgot-link {
           font-size: 13px;
           color: #555;
           text-decoration: none;
-          transition: color 0.2s ease;
         }
         .forgot-link:hover { color: #111; text-decoration: underline; }
-
         .login-btn {
           width: 100%;
           padding: 16px;
@@ -336,11 +415,8 @@ const Login = () => {
           letter-spacing: 1.5px;
           cursor: pointer;
           font-family: 'Poppins', sans-serif;
-          transition: background 0.25s ease, transform 0.2s ease,
-                      box-shadow 0.25s ease, color 0.25s ease;
+          transition: background 0.25s ease, transform 0.2s ease, box-shadow 0.25s ease, color 0.25s ease;
           margin-bottom: 20px;
-          position: relative;
-          overflow: hidden;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -352,15 +428,8 @@ const Login = () => {
           transform: translateY(-2px);
           box-shadow: 0 8px 24px rgba(17, 17, 17, 0.2);
         }
-        .login-btn:active:not(:disabled) {
-          transform: translateY(0px);
-          box-shadow: none;
-        }
-        .login-btn:disabled {
-          opacity: 0.7;
-          cursor: not-allowed;
-        }
-
+        .login-btn:active:not(:disabled) { transform: translateY(0px); box-shadow: none; }
+        .login-btn:disabled { opacity: 0.7; cursor: not-allowed; }
         .spinner {
           width: 16px;
           height: 16px;
@@ -368,24 +437,15 @@ const Login = () => {
           border-top-color: transparent;
           border-radius: 50%;
           animation: spin 0.7s linear infinite;
-          flex-shrink: 0;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        .signup-row {
-          text-align: center;
-          font-size: 13.5px;
-          color: #666;
-        }
-
+        .signup-row { text-align: center; font-size: 13.5px; color: #666; }
         .signup-link {
           color: #111111;
           font-weight: 700;
           text-decoration: none;
           margin-left: 4px;
           position: relative;
-          transition: color 0.2s ease;
-          cursor: pointer;
         }
         .signup-link::after {
           content: '';
@@ -397,24 +457,32 @@ const Login = () => {
         }
         .signup-link:hover::after { width: 100%; }
         .signup-link:hover { color: #333; }
-
-        .shoe-tooltip {
-          position: fixed;
-          background: #111;
-          color: #fff;
-          padding: 6px 12px;
-          border-radius: 8px;
-          font-size: 12px;
-          font-weight: 600;
-          pointer-events: none;
-          opacity: 0;
-          transform: translateY(10px);
-          transition: opacity 0.3s ease, transform 0.3s ease;
-          z-index: 100;
-          white-space: nowrap;
+        .social-btn {
+          width: 100%;
+          padding: 14px;
+          border: none;
+          border-radius: 10px;
+          margin-bottom: 12px;
+          cursor: pointer;
+          font-size: 15px;
+          font-weight: bold;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          transition: transform 0.2s, box-shadow 0.2s;
         }
-        .shoe-tooltip.show { opacity: 1; transform: translateY(0); }
-
+        .social-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .facebook-btn { background: #1877f2; color: white; }
+        .google-btn { background: white; border: 1.5px solid #ddd; color: #333; }
+        .divider {
+          text-align: center;
+          margin: 24px 0;
+          color: #888;
+          font-size: 13px;
+          font-weight: bold;
+          letter-spacing: 1px;
+        }
         @media (max-width: 520px) {
           .login-card { margin: 16px; padding: 36px 24px 32px; }
           .shoe-top-left  { width: 140px; top: -10px; left: -20px; }
@@ -423,13 +491,6 @@ const Login = () => {
       `}</style>
 
       <div className="login-page">
-        <div
-          className={`shoe-tooltip ${tooltip.show ? 'show' : ''}`}
-          style={{ left: tooltip.x, top: tooltip.y }}
-        >
-          {tooltip.text}
-        </div>
-
         <img
           ref={leftShoeRef}
           src="/shoe-left.png"
@@ -450,6 +511,25 @@ const Login = () => {
 
         <div className="login-card">
           <h1 className="login-title">Login</h1>
+
+          <button className="social-btn facebook-btn" onClick={handleFacebookLogin}>
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+            </svg>
+            Continue with Facebook
+          </button>
+
+          <button className="social-btn google-btn" onClick={handleGoogleLogin}>
+            <svg width="20" height="20" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+            </svg>
+            Continue with Google
+          </button>
+
+          <div className="divider">OR LOGIN WITH EMAIL</div>
 
           {error && (
             <div className="error-banner">
@@ -487,7 +567,6 @@ const Login = () => {
                 type="button"
                 className="eye-toggle"
                 onClick={() => setShowPassword(!showPassword)}
-                aria-label="Toggle password visibility"
               >
                 {showPassword ? '🙈' : '👁️'}
               </button>
@@ -496,30 +575,12 @@ const Login = () => {
             <div className="login-options">
               <label
                 className="remember-label"
-                onClick={() => setRememberMe(!rememberMe)}
+                onClick={() => {}}
               >
-                <span
-                  className="custom-checkbox"
-                  style={{ background: rememberMe ? '#64d792' : '#ffffff' }}
-                >
-                  {rememberMe && (
-                    <svg width="11" height="8" viewBox="0 0 11 8" fill="none">
-                      <path
-                        d="M1 4L4 7L10 1"
-                        stroke="white"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  )}
-                </span>
+                <span className="custom-checkbox" style={{ background: '#ffffff' }}></span>
                 Remember me
               </label>
-              <Link
-                to="/forgot-password"
-                className="forgot-link"
-              >
+              <Link to="/forgot-password" className="forgot-link">
                 Forgot password?
               </Link>
             </div>
@@ -532,10 +593,7 @@ const Login = () => {
 
           <div className="signup-row">
             Don't have an account ?
-            <Link
-              to="/signup"
-              className="signup-link"
-            >
+            <Link to="/signup" className="signup-link">
               Sign Up
             </Link>
           </div>
