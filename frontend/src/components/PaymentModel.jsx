@@ -7,7 +7,6 @@ const PaymentModal = ({ isOpen, onClose, product }) => {
 
   if (!isOpen || !product) return null;
 
-  // ✅ FIXED: Use import.meta.env for Vite (not process.env)
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
 
   const getToken = () => {
@@ -26,37 +25,67 @@ const PaymentModal = ({ isOpen, onClose, product }) => {
   };
 
   const extractAmount = () => {
-    const amount = parseFloat(product.price.replace(/[^0-9.]/g, ''));
-    if (isNaN(amount) || amount <= 0) throw new Error('Invalid product amount');
+    let price = product.price;
+    
+    // Handle different price formats
+    if (typeof price === 'number') {
+      price = price.toString();
+    }
+    
+    if (typeof price !== 'string') {
+      console.error('Invalid price type:', typeof price, price);
+      throw new Error('Invalid product price format');
+    }
+    
+    // Remove currency symbols and commas, keep only numbers and dots
+    const cleanPrice = price.replace(/[^0-9.]/g, '');
+    const amount = parseFloat(cleanPrice);
+    
+    if (isNaN(amount) || amount <= 0) {
+      throw new Error(`Invalid product amount: ${price} (cleaned: ${cleanPrice})`);
+    }
     return amount;
   };
 
   const handleKhalti = async () => {
     setSelectedMethod('khalti');
     setLoading(prev => ({ ...prev, khalti: true }));
+    
     try {
       const amount = extractAmount();
       const token = getToken();
+      
       if (!token) {
         alert('Please login first!');
         setLoading(prev => ({ ...prev, khalti: false }));
+        setSelectedMethod(null);
         return;
       }
+
+      const productId = product.id || product._id;
+      if (!productId) {
+        throw new Error('Product ID is missing');
+      }
+
+      console.log('Sending Khalti request:', {
+        amount,
+        productName: product.name,
+        productId,
+      });
 
       const response = await fetch(`${BACKEND_URL}/api/payment/khalti/initiate`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
           amount,
-          productName: product.name,
-          productId: product.id || product._id,
-          customerName: localStorage.getItem('userName') || 'Customer',
-          customerEmail: localStorage.getItem('userEmail') || 'customer@example.com',
-          customerPhone: localStorage.getItem('userPhone') || '9800000001',
+          productName: product.name || 'Product',
+          productId: productId.toString(),
         }),
       });
 
       const data = await response.json();
+      console.log('Khalti response:', data);
+      
       if (!response.ok) {
         throw new Error(data.message || data.error || `Server error: ${response.status}`);
       }
@@ -77,13 +106,21 @@ const PaymentModal = ({ isOpen, onClose, product }) => {
   const handleCOD = async () => {
     setSelectedMethod('cod');
     setLoading(prev => ({ ...prev, cod: true }));
+    
     try {
       const amount = extractAmount();
       const token = getToken();
+      
       if (!token) {
         alert('Please login first!');
         setLoading(prev => ({ ...prev, cod: false }));
+        setSelectedMethod(null);
         return;
+      }
+
+      const productId = product.id || product._id;
+      if (!productId) {
+        throw new Error('Product ID is missing');
       }
 
       const response = await fetch(`${BACKEND_URL}/api/payment/cod/initiate`, {
@@ -91,11 +128,8 @@ const PaymentModal = ({ isOpen, onClose, product }) => {
         headers: getAuthHeaders(),
         body: JSON.stringify({
           amount,
-          productName: product.name,
-          productId: product.id || product._id,
-          customerName: localStorage.getItem('userName') || 'Customer',
-          customerEmail: localStorage.getItem('userEmail') || 'customer@example.com',
-          customerPhone: localStorage.getItem('userPhone') || '9800000001',
+          productName: product.name || 'Product',
+          productId: productId.toString(),
         }),
       });
 
@@ -162,7 +196,8 @@ const PaymentModal = ({ isOpen, onClose, product }) => {
         </p>
       </div>
 
-      <style>{`        .payment-overlay {
+      <style>{`
+        .payment-overlay {
           position: fixed;
           inset: 0;
           background: rgba(0,0,0,0.5);

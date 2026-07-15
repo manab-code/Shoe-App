@@ -1,38 +1,50 @@
+// ═══════════════════════════════════════════════════════════════
+// src/components/ForgotPassword.jsx
+// ═══════════════════════════════════════════════════════════════
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, ArrowLeft, Loader2, KeyRound, Lock } from 'lucide-react';
+import { BACKEND_URL } from '../config/api';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1); // 1: email, 2: OTP, 3: new password
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
-  const [newPassword, setNewPassword] = useState('');
+  const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [resetToken, setResetToken] = useState('');
+  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [resetToken, setResetToken] = useState('');
 
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
-
-  const handleSendOTP = async (e) => {
+  const handleRequestOTP = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setMessage('');
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/auth/forgot-password`, {
+      console.log('Calling:', BACKEND_URL + '/api/auth/forgot-password');
+      
+      const response = await fetch(BACKEND_URL + '/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message);
+      console.log('Response:', data);
 
-      setStep(2);
+      if (data.success) {
+        setMessage(data.message);
+        setStep(2);
+      } else {
+        setError(data.message || 'Failed to send OTP');
+      }
     } catch (err) {
-      setError(err.message);
+      console.error('Fetch error:', err);
+      setError('Cannot connect to server. Is backend running on port 8080?');
     } finally {
       setLoading(false);
     }
@@ -42,21 +54,26 @@ const ForgotPassword = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setMessage('');
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/auth/verify-otp`, {
+      const response = await fetch(BACKEND_URL + '/api/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp }),
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message);
 
-      setResetToken(data.resetToken);
-      setStep(3);
+      if (data.success) {
+        setResetToken(data.resetToken);
+        setMessage('OTP verified! Enter your new password.');
+        setStep(3);
+      } else {
+        setError(data.message || 'Invalid OTP');
+      }
     } catch (err) {
-      setError(err.message);
+      setError('Server error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -64,284 +81,212 @@ const ForgotPassword = () => {
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match.');
+    setLoading(true);
+    setError('');
+    setMessage('');
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    setError('');
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      setLoading(false);
+      return;
+    }
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/auth/reset-password`, {
+      const response = await fetch(BACKEND_URL + '/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resetToken, newPassword }),
+        body: JSON.stringify({ resetToken, password }),
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message);
 
-      alert('Password reset successful! Please login.');
-      navigate('/login');
+      if (data.success) {
+        setMessage('Password reset successful! Redirecting...');
+        setTimeout(() => navigate('/login'), 2000);
+      } else {
+        setError(data.message || 'Failed to reset password');
+      }
     } catch (err) {
-      setError(err.message);
+      setError('Server error. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px',
-      background: '#f9fafb'
-    }}>
-      <div style={{
-        background: '#fff',
-        padding: '40px',
-        borderRadius: '20px',
-        maxWidth: '400px',
-        width: '100%',
-        boxShadow: '0 10px 40px rgba(0,0,0,0.1)'
-      }}>
-        <button 
-          onClick={() => step === 1 ? navigate('/login') : setStep(step - 1)}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            color: '#6b7280',
-            marginBottom: '20px',
-            fontSize: '14px'
-          }}
-        >
-          <ArrowLeft size={16} />
-          {step === 1 ? 'Back to Login' : 'Back'}
-        </button>
-
-        <h2 style={{ margin: '0 0 8px', fontSize: '24px', color: '#111' }}>
-          {step === 1 && 'Forgot Password?'}
-          {step === 2 && 'Enter OTP'}
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <h2 style={styles.title}>
+          {step === 1 && 'Forgot Password'}
+          {step === 2 && 'Verify OTP'}
           {step === 3 && 'Reset Password'}
         </h2>
-        <p style={{ color: '#6b7280', marginBottom: '24px', fontSize: '14px' }}>
-          {step === 1 && 'Enter your email to receive a reset OTP.'}
-          {step === 2 && `We sent a 6-digit code to ${email}`}
-          {step === 3 && 'Create a new password for your account.'}
-        </p>
 
-        {error && (
-          <div style={{
-            background: '#fee2e2',
-            color: '#991b1b',
-            padding: '12px',
-            borderRadius: '8px',
-            marginBottom: '16px',
-            fontSize: '14px'
-          }}>
-            {error}
-          </div>
-        )}
+        {message && <div style={styles.success}>{message}</div>}
+        {error && <div style={styles.error}>{error}</div>}
 
         {step === 1 && (
-          <form onSubmit={handleSendOTP}>
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
-                Email Address
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Mail size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="you@example.com"
-                  style={{
-                    width: '100%',
-                    padding: '12px 12px 12px 40px',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '10px',
-                    fontSize: '15px',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: '100%',
-                padding: '14px',
-                background: '#111',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '10px',
-                fontSize: '16px',
-                fontWeight: 600,
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.7 : 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-            >
-              {loading ? <Loader2 size={18} className="spin" /> : 'Send OTP'}
+          <form onSubmit={handleRequestOTP}>
+            <p style={styles.text}>Enter your email and we will send you an OTP.</p>
+            <input
+              type="email"
+              placeholder="Email Address"
+              style={styles.input}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <button type="submit" style={styles.button} disabled={loading}>
+              {loading ? 'Sending...' : 'Send OTP'}
             </button>
           </form>
         )}
 
         {step === 2 && (
           <form onSubmit={handleVerifyOTP}>
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
-                OTP Code
-              </label>
-              <div style={{ position: 'relative' }}>
-                <KeyRound size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                <input
-                  type="text"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  required
-                  placeholder="123456"
-                  maxLength={6}
-                  style={{
-                    width: '100%',
-                    padding: '12px 12px 12px 40px',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '10px',
-                    fontSize: '15px',
-                    outline: 'none',
-                    textAlign: 'center',
-                    letterSpacing: '8px',
-                    fontSize: '20px',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-            </div>
+            <p style={styles.text}>Enter the 6-digit OTP sent to {email}</p>
+            <input
+              type="text"
+              placeholder="Enter OTP"
+              style={styles.input}
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              maxLength={6}
+              required
+            />
+            <button type="submit" style={styles.button} disabled={loading}>
+              {loading ? 'Verifying...' : 'Verify OTP'}
+            </button>
             <button
-              type="submit"
-              disabled={loading || otp.length !== 6}
-              style={{
-                width: '100%',
-                padding: '14px',
-                background: '#111',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '10px',
-                fontSize: '16px',
-                fontWeight: 600,
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.7 : 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
+              type="button"
+              style={styles.linkButton}
+              onClick={() => { setStep(1); setError(''); setMessage(''); }}
             >
-              {loading ? <Loader2 size={18} className="spin" /> : 'Verify OTP'}
+              Back to email
             </button>
           </form>
         )}
 
         {step === 3 && (
           <form onSubmit={handleResetPassword}>
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
-                New Password
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  style={{
-                    width: '100%',
-                    padding: '12px 12px 12px 40px',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '10px',
-                    fontSize: '15px',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-            </div>
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
-                Confirm Password
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  style={{
-                    width: '100%',
-                    padding: '12px 12px 12px 40px',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '10px',
-                    fontSize: '15px',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: '100%',
-                padding: '14px',
-                background: '#16a34a',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '10px',
-                fontSize: '16px',
-                fontWeight: 600,
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.7 : 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-            >
-              {loading ? <Loader2 size={18} className="spin" /> : 'Reset Password'}
+            <input
+              type="password"
+              placeholder="New Password"
+              style={styles.input}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              minLength={6}
+              required
+            />
+            <input
+              type="password"
+              placeholder="Confirm Password"
+              style={styles.input}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              minLength={6}
+              required
+            />
+            <button type="submit" style={styles.button} disabled={loading}>
+              {loading ? 'Resetting...' : 'Reset Password'}
             </button>
           </form>
         )}
-      </div>
 
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-        .spin {
-          animation: spin 1s linear infinite;
-        }
-      `}</style>
+        <button
+          type="button"
+          style={styles.linkButton}
+          onClick={() => navigate('/login')}
+        >
+          Back to Login
+        </button>
+      </div>
     </div>
   );
+};
+
+const styles = {
+  container: {
+    minHeight: '100vh',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    background: '#f5f0f0',
+    padding: '20px',
+  },
+  card: {
+    background: '#fff',
+    width: '100%',
+    maxWidth: '420px',
+    padding: '40px',
+    borderRadius: '20px',
+    boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+  },
+  title: {
+    textAlign: 'center',
+    marginBottom: '24px',
+    fontSize: '28px',
+    fontWeight: 'bold',
+  },
+  text: {
+    textAlign: 'center',
+    color: '#666',
+    marginBottom: '20px',
+    fontSize: '14px',
+  },
+  input: {
+    width: '100%',
+    padding: '14px 16px',
+    marginBottom: '15px',
+    borderRadius: '10px',
+    border: '1.5px solid #ddd',
+    fontSize: '15px',
+    outline: 'none',
+  },
+  button: {
+    width: '100%',
+    padding: '14px',
+    border: 'none',
+    borderRadius: '10px',
+    background: '#111',
+    color: 'white',
+    fontSize: '16px',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    marginBottom: '12px',
+  },
+  linkButton: {
+    width: '100%',
+    padding: '10px',
+    border: 'none',
+    background: 'none',
+    color: '#666',
+    fontSize: '14px',
+    cursor: 'pointer',
+    textDecoration: 'underline',
+  },
+  success: {
+    padding: '12px',
+    background: '#e8f5e9',
+    borderRadius: '8px',
+    color: '#2e7d32',
+    marginBottom: '16px',
+    fontSize: '14px',
+  },
+  error: {
+    padding: '12px',
+    background: '#ffebee',
+    borderRadius: '8px',
+    color: '#c62828',
+    marginBottom: '16px',
+    fontSize: '14px',
+  },
 };
 
 export default ForgotPassword;

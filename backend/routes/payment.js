@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { isSignedIn } = require('../controllers/auth');
+const { isSignedIn } = require('../controllers/auth'); // ← ADD THIS LINE
 const {
   initiateEsewaPayment,
   handleEsewaSuccess,
@@ -11,7 +11,7 @@ const {
   initiateCOD,
 } = require('../controllers/payment');
 
-// Test endpoint - GET (no auth required)
+// Test endpoint
 router.get('/esewa/test-signature', testEsewaSignature);
 
 // eSewa
