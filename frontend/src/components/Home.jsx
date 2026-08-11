@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, ShoppingCart, User, LogOut, X, Trash2, Plus } from "lucide-react";
+import ThemeToggle from '../components/ThemeToggle.jsx';
 
 // ─── Import product lists from other pages ────────────────────────────────
 const bestSellingProducts = [
@@ -54,13 +55,13 @@ const LogoutModal = ({ onConfirm, onCancel }) => {
     animation: 'fadeIn 0.15s ease',
   };
   const cardStyle = {
-    background: '#fffbfb',
+    background: 'var(--bg)',
     borderRadius: '20px',
     padding: '28px 28px 24px',
     width: '100%',
     maxWidth: '340px',
     margin: '16px',
-    boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+    boxShadow: 'var(--shadow)',
     animation: 'scaleIn 0.2s cubic-bezier(0.34,1.56,0.64,1)',
   };
   return (
@@ -79,19 +80,19 @@ const LogoutModal = ({ onConfirm, onCancel }) => {
           }}>
             <LogOut size={22} color="#e53e3e" />
           </div>
-          <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#111' }}>Confirm logout</h2>
-          <p style={{ margin: '0 0 24px', fontSize: 14, color: '#666', lineHeight: 1.5 }}>
+          <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: 'var(--text-h)' }}>Confirm logout</h2>
+          <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--muted-text)', lineHeight: 1.5 }}>
             Are you sure you want to logout from your account?
           </p>
           <div style={{ display: 'flex', gap: 10 }}>
             <button onClick={onCancel} style={{
               flex: 1, padding: '12px', borderRadius: 12,
-              border: '1.5px solid #e0e0e0', background: '#fafafa',
+              border: '1.5px solid var(--border)', background: 'var(--surface)',
               fontSize: 14, fontWeight: 600, cursor: 'pointer',
-              fontFamily: 'Poppins, sans-serif', color: '#444',
+              fontFamily: 'Poppins, sans-serif', color: 'var(--text)',
               transition: 'background 0.2s',
-            }} onMouseEnter={(e) => e.currentTarget.style.background = '#f0f0f0'}
-               onMouseLeave={(e) => e.currentTarget.style.background = '#fafafa'}>
+            }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--border)'}
+               onMouseLeave={(e) => e.currentTarget.style.background = 'var(--surface)'}>
               Cancel
             </button>
             <button onClick={onConfirm} style={{
@@ -178,12 +179,12 @@ const SearchBar = ({ isOpen, onClose, products, onProductSelect }) => {
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
-            background: '#ffffff',
+            background: 'var(--bg)',
             borderRadius: '16px',
             padding: '16px 24px',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+            boxShadow: 'var(--shadow)',
           }}>
-            <Search size={22} color="#374151" />
+            <Search size={22} color="var(--text)" />
             <input
               ref={inputRef}
               type="text"
@@ -196,7 +197,7 @@ const SearchBar = ({ isOpen, onClose, products, onProductSelect }) => {
                 outline: 'none',
                 fontSize: '16px',
                 fontFamily: 'Poppins, sans-serif',
-                color: '#111',
+                color: 'var(--text-h)',
                 background: 'transparent',
               }}
             />
@@ -213,22 +214,22 @@ const SearchBar = ({ isOpen, onClose, products, onProductSelect }) => {
                 justifyContent: 'center',
               }}
             >
-              <X size={20} color="#9ca3af" />
+              <X size={20} color="var(--text)" />
             </button>
           </div>
 
           {query.trim() !== '' && (
             <div style={{
               marginTop: '12px',
-              background: '#ffffff',
+              background: 'var(--bg)',
               borderRadius: '16px',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+              boxShadow: 'var(--shadow)',
               maxHeight: '400px',
               overflowY: 'auto',
               padding: '8px 0',
             }}>
               {filtered.length === 0 ? (
-                <div style={{ padding: '16px 24px', color: '#9ca3af', textAlign: 'center' }}>
+                <div style={{ padding: '16px 24px', color: 'var(--text)', textAlign: 'center' }}>
                   No shoes found
                 </div>
               ) : (
@@ -242,9 +243,9 @@ const SearchBar = ({ isOpen, onClose, products, onProductSelect }) => {
                       padding: '12px 24px',
                       cursor: 'pointer',
                       transition: 'background 0.15s',
-                      borderBottom: '1px solid #f3f4f6',
+                      borderBottom: '1px solid var(--border)',
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface)'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                     onClick={() => {
                       onProductSelect(product);
@@ -255,14 +256,14 @@ const SearchBar = ({ isOpen, onClose, products, onProductSelect }) => {
                     <img
                       src={product.image}
                       alt={product.name}
-                      style={{ width: '48px', height: '48px', objectFit: 'contain', borderRadius: '8px', background: '#fff' }}
+                      style={{ width: '48px', height: '48px', objectFit: 'contain', borderRadius: '8px', background: 'var(--bg)' }}
                       onError={(e) => { e.target.src = 'https://via.placeholder.com/48'; }}
                     />
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600, color: '#111' }}>{product.name}</div>
-                      <div style={{ fontSize: '13px', color: '#666' }}>{product.price}</div>
+                      <div style={{ fontWeight: 600, color: 'var(--text-h)' }}>{product.name}</div>
+                      <div style={{ fontSize: '13px', color: 'var(--text)' }}>{product.price}</div>
                     </div>
-                    <span style={{ fontSize: '13px', color: '#9ca3af' }}>↗</span>
+                    <span style={{ fontSize: '13px', color: 'var(--text)' }}>↗</span>
                   </div>
                 ))
               )}
@@ -331,7 +332,7 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
           width: '100%',
           maxWidth: '420px',
           height: '100vh',
-          background: '#ffffff',
+          background: 'var(--bg)',
           zIndex: 1000,
           display: 'flex',
           flexDirection: 'column',
@@ -344,11 +345,11 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '20px 24px',
-          borderBottom: '1px solid #f0f0f0',
+          borderBottom: '1px solid var(--border)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <ShoppingCart size={22} color="#111" />
-            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#111' }}>
+            <ShoppingCart size={22} color="var(--text-h)" />
+            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-h)' }}>
               Your Cart ({cartItems.length})
             </h2>
           </div>
@@ -356,15 +357,15 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
             padding: '8px',
             borderRadius: '50%',
             border: 'none',
-            background: '#f3f4f6',
+            background: 'var(--surface)',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             transition: 'background 0.2s',
-          }} onMouseEnter={(e) => e.currentTarget.style.background = '#e5e7eb'}
-             onMouseLeave={(e) => e.currentTarget.style.background = '#f3f4f6'}>
-            <X size={18} color="#374151" />
+          }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--border)'}
+             onMouseLeave={(e) => e.currentTarget.style.background = 'var(--surface)'}>
+            <X size={18} color="var(--text)" />
           </button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 24px' }}>
@@ -376,9 +377,9 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
               justifyContent: 'center',
               height: '100%',
               gap: '16px',
-              color: '#9ca3af',
+              color: 'var(--text)',
             }}>
-              <ShoppingCart size={48} strokeWidth={1.5} />
+              <ShoppingCart size={48} strokeWidth={1.5} color="var(--text)" />
               <p style={{ margin: 0, fontSize: '15px', fontWeight: 500 }}>Your cart is empty</p>
               <p style={{ margin: 0, fontSize: '13px' }}>Add items from Best Selling to see them here</p>
             </div>
@@ -390,12 +391,12 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
                   gap: '14px',
                   padding: '14px',
                   borderRadius: '14px',
-                  background: '#fafafa',
-                  border: '1px solid #f0f0f0',
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
                   transition: 'transform 0.2s, box-shadow 0.2s',
                 }} onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow)';
                 }} onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
                   e.currentTarget.style.boxShadow = 'none';
@@ -408,17 +409,17 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
                       height: '70px',
                       objectFit: 'contain',
                       borderRadius: '10px',
-                      background: '#fff',
+                      background: 'var(--bg)',
                     }}
                     onError={(e) => { e.target.src = '/placeholder.png'; }}
                   />
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                    <h4 style={{ margin: '0 0 6px', fontSize: '14px', fontWeight: 600, color: '#111' }}>{item.name}</h4>
+                    <h4 style={{ margin: '0 0 6px', fontSize: '14px', fontWeight: 600, color: 'var(--text-h)' }}>{item.name}</h4>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '14px', fontWeight: 700, color: '#111' }}>
+                      <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-h)' }}>
                         {typeof item.price === 'number' ? `₹${item.price}` : item.price}
                       </span>
-                      <span style={{ fontSize: '12px', color: '#9ca3af', textDecoration: 'line-through' }}>
+                      <span style={{ fontSize: '12px', color: 'var(--text)', textDecoration: 'line-through' }}>
                         {typeof item.oldPrice === 'number' ? `₹${item.oldPrice}` : (item.oldPrice || (typeof item.price === 'number' ? `₹${item.price * 1.2}` : ''))}
                       </span>
                     </div>
@@ -446,8 +447,8 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
         {cartItems.length > 0 && (
           <div style={{
             padding: '20px 24px',
-            borderTop: '1px solid #f0f0f0',
-            background: '#fafafa',
+            borderTop: '1px solid var(--border)',
+            background: 'var(--surface)',
           }}>
             <div style={{
               display: 'flex',
@@ -455,23 +456,23 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
               alignItems: 'center',
               marginBottom: '16px',
             }}>
-              <span style={{ fontSize: '14px', color: '#666', fontWeight: 500 }}>Total Items</span>
-              <span style={{ fontSize: '16px', fontWeight: 700, color: '#111' }}>{cartItems.length}</span>
+              <span style={{ fontSize: '14px', color: 'var(--text)', fontWeight: 500 }}>Total Items</span>
+              <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-h)' }}>{cartItems.length}</span>
             </div>
             <button style={{
               width: '100%',
               padding: '14px',
               borderRadius: '12px',
               border: 'none',
-              background: '#111',
-              color: '#fff',
+              background: 'var(--text-h)',
+              color: 'var(--bg)',
               fontSize: '15px',
               fontWeight: 600,
               cursor: 'pointer',
               fontFamily: 'Poppins, sans-serif',
               transition: 'background 0.2s, transform 0.15s',
-            }} onMouseEnter={(e) => { e.currentTarget.style.background = '#333'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-               onMouseLeave={(e) => { e.currentTarget.style.background = '#111'; e.currentTarget.style.transform = 'translateY(0)'; }}>
+            }} onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+               onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)'; }}>
               Checkout
             </button>
           </div>
@@ -498,29 +499,29 @@ const UserDropdown = ({ user, onLogoutClick, onClose }) => {
       top: 'calc(100% + 8px)',
       right: 0,
       width: 220,
-      background: '#ffffff',
+      background: 'var(--bg)',
       borderRadius: 16,
-      border: '1px solid #e8e8e8',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+      border: '1px solid var(--border)',
+      boxShadow: 'var(--shadow)',
       overflow: 'hidden',
       zIndex: 100,
       animation: 'dropIn 0.18s cubic-bezier(0.34,1.56,0.64,1)',
     },
     header: {
       padding: '14px 16px',
-      borderBottom: '1px solid #f0f0f0',
+      borderBottom: '1px solid var(--border)',
       display: 'flex',
       alignItems: 'center',
       gap: 10,
     },
     avatar: {
       width: 36, height: 36, borderRadius: '50%',
-      background: '#f3f4f6',
+      background: 'var(--surface)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       flexShrink: 0,
     },
-    name: { margin: 0, fontSize: 13, fontWeight: 700, color: '#111' },
-    email: { margin: 0, fontSize: 11, color: '#888', marginTop: 1 },
+    name: { margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--text-h)' },
+    email: { margin: 0, fontSize: 11, color: 'var(--text)', marginTop: 1 },
     logoutBtn: {
       width: '100%', padding: '12px 16px',
       display: 'flex', alignItems: 'center', gap: 10,
@@ -537,7 +538,7 @@ const UserDropdown = ({ user, onLogoutClick, onClose }) => {
       <style>{`@keyframes dropIn { from { opacity:0; transform:translateY(-8px) scale(0.96); } to { opacity:1; transform:translateY(0) scale(1); } }`}</style>
       <div ref={dropdownRef} style={style.wrapper}>
         <div style={style.header}>
-          <div style={style.avatar}><User size={16} color="#374151" /></div>
+          <div style={style.avatar}><User size={16} color="var(--text)" /></div>
           <div><p style={style.name}>{user?.name || 'My Account'}</p><p style={style.email}>{user?.email || ''}</p></div>
         </div>
         <button style={style.logoutBtn} onMouseEnter={(e) => e.currentTarget.style.background = '#fff5f5'}
@@ -675,7 +676,7 @@ const Home = () => {
   }, []);
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#ffffff", fontFamily: "Poppins, sans-serif", position: "relative" }}>
+    <div style={{ minHeight: "100vh", backgroundColor: "var(--bg)", fontFamily: "Poppins, sans-serif", position: "relative" }}>
 
       <SearchBar
         isOpen={searchOpen}
@@ -704,14 +705,14 @@ const Home = () => {
           top: '24px',
           left: '50%',
           transform: 'translateX(-50%)',
-          background: '#111',
-          color: '#fff',
+          background: 'var(--text-h)',
+          color: 'var(--bg)',
           padding: '12px 24px',
           borderRadius: '12px',
           fontSize: '14px',
           fontWeight: 600,
           zIndex: 9999,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+          boxShadow: 'var(--shadow)',
           animation: 'fadeInUp 0.3s ease',
         }}>
           {addedMessage}
@@ -787,8 +788,8 @@ const Home = () => {
           animation: fadeIn 0.15s ease;
         }
         .search-popup {
-          background: #ffffff;
-          border: 1px solid #e5e7eb;
+          background: var(--bg);
+          border: 1px solid var(--border);
           border-radius: 16px;
           padding: 24px;
           width: 100%;
@@ -798,7 +799,7 @@ const Home = () => {
           flex-direction: column;
           align-items: center;
           text-align: center;
-          box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+          box-shadow: var(--shadow);
           animation: scaleIn 0.2s cubic-bezier(0.34,1.56,0.64,1);
         }
         .search-popup-close {
@@ -809,16 +810,16 @@ const Home = () => {
           height: 28px;
           border-radius: 50%;
           border: none;
-          background: #f3f4f6;
+          background: var(--surface);
           display: inline-flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          color: #111827;
+          color: var(--text-h);
           line-height: 1;
           transition: background-color 0.2s ease;
         }
-        .search-popup-close:hover { background: #e5e7eb; }
+        .search-popup-close:hover { background: var(--border); }
         .search-popup-image-wrapper {
           width: 100%;
           display: flex;
@@ -834,7 +835,7 @@ const Home = () => {
         .search-popup-name {
           font-size: 16px;
           font-weight: 700;
-          color: #111827;
+          color: var(--text-h);
           margin-bottom: 8px;
         }
         .search-popup-pricing {
@@ -847,11 +848,11 @@ const Home = () => {
         .search-popup-price {
           font-size: 16px;
           font-weight: 700;
-          color: #111827;
+          color: var(--text-h);
         }
         .search-popup-old-price {
           font-size: 13px;
-          color: #6b7280;
+          color: var(--text);
           text-decoration: line-through;
         }
         .search-popup-added-msg {
@@ -875,9 +876,9 @@ const Home = () => {
           width: 100%;
           padding: 12px 0;
           border-radius: 999px;
-          border: 1px solid #111827;
-          background: #ffffff;
-          color: #111827;
+          border: 1px solid var(--text-h);
+          background: var(--bg);
+          color: var(--text-h);
           font-size: 14px;
           font-weight: 600;
           cursor: pointer;
@@ -885,8 +886,8 @@ const Home = () => {
         }
         .search-popup-buy-now:hover,
         .search-popup-add-cart:hover {
-          background: #111827;
-          color: #ffffff;
+          background: var(--text-h);
+          color: var(--bg);
         }
         @keyframes fadeIn {
           from { opacity: 0; } to { opacity: 1; }
@@ -898,33 +899,36 @@ const Home = () => {
 
       {/* Navbar */}
       <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "24px 32px", position: "relative", zIndex: 20 }}>
-        <div style={{ fontSize: "24px", fontWeight: "700", cursor: "pointer", letterSpacing: "-0.8px" }} onClick={() => navigate("/")}>Slick</div>
+        <div style={{ fontSize: "24px", fontWeight: "700", cursor: "pointer", letterSpacing: "-0.8px", color: "var(--text-h)" }} onClick={() => navigate("/")}>Slick</div>
         <div style={{ display: "flex", gap: "24px", alignItems: "center", position: "relative", zIndex: 50 }}>
 
           {/* Search */}
           <button
             type="button"
             aria-label="Search"
-            style={{ background: "none", border: "none", cursor: "pointer", borderRadius: "50%", padding: "8px", display: "flex", alignItems: "center", justifyContent: "center", transition: "background-color 0.2s ease, transform 0.2s ease" }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#eff2f8'; e.currentTarget.style.transform = 'scale(1.1)'; }}
+            style={{ background: "none", border: "none", cursor: "pointer", borderRadius: "50%", padding: "8px", display: "flex", alignItems: "center", justifyContent: "center", transition: "background-color 0.2s ease, transform 0.2s ease", color: "var(--text)" }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface)'; e.currentTarget.style.transform = 'scale(1.1)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
             onClick={() => setSearchOpen(true)}
           >
-            <Search size={20} color="#374151" />
+            <Search size={20} color="currentColor" />
           </button>
+
+          {/* Theme toggle — shown only on the home page, left of cart */}
+          <ThemeToggle />
 
           {/* Cart */}
           <button
             type="button"
             aria-label="Cart"
-            style={{ background: "none", border: "none", cursor: "pointer", borderRadius: "50%", padding: "8px", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", transition: "background-color 0.2s ease, transform 0.2s ease" }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#f3f4f6'; e.currentTarget.style.transform = 'scale(1.1)'; }}
+            style={{ background: "none", border: "none", cursor: "pointer", borderRadius: "50%", padding: "8px", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", transition: "background-color 0.2s ease, transform 0.2s ease", color: "var(--text)" }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface)'; e.currentTarget.style.transform = 'scale(1.1)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
             onClick={() => setCartOpen(true)}
           >
-            <ShoppingCart size={20} color="#374151" />
+            <ShoppingCart size={20} color="currentColor" />
             {cartCount > 0 && (
-              <span style={{ position: "absolute", top: "-4px", right: "-4px", background: "#e53e3e", color: "#fff", fontSize: "11px", fontWeight: 700, width: "18px", height: "18px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #fff", pointerEvents: "none" }}>{cartCount}</span>
+              <span style={{ position: "absolute", top: "-4px", right: "-4px", background: "#e53e3e", color: "#fff", fontSize: "11px", fontWeight: 700, width: "18px", height: "18px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid var(--bg)", pointerEvents: "none" }}>{cartCount}</span>
             )}
           </button>
 
@@ -933,8 +937,8 @@ const Home = () => {
             <button
               onClick={() => navigate('/dashboard')}
               style={{
-                background: '#111',
-                color: '#fff',
+                background: 'var(--text-h)',
+                color: 'var(--bg)',
                 border: 'none',
                 padding: '8px 16px',
                 borderRadius: '8px',
@@ -945,10 +949,10 @@ const Home = () => {
                 alignItems: 'center',
                 gap: '6px',
                 fontFamily: 'Poppins, sans-serif',
-                transition: 'background 0.2s, transform 0.15s',
+                transition: 'opacity 0.2s, transform 0.15s',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = '#333'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = '#111'; e.currentTarget.style.transform = 'translateY(0)'; }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)'; }}
             >
               ⚙️ Admin
             </button>
@@ -959,12 +963,12 @@ const Home = () => {
             <button
               type="button"
               aria-label={isLoggedIn ? 'Account menu' : 'Login'}
-              style={{ background: "none", border: "none", cursor: "pointer", borderRadius: "50%", padding: "8px", display: "flex", alignItems: "center", justifyContent: "center", transition: "background-color 0.2s ease, transform 0.2s ease", ...(isLoggedIn ? { backgroundColor: '#f3f4f6' } : {}) }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#f3f4f6'; e.currentTarget.style.transform = 'scale(1.1)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = isLoggedIn ? '#f3f4f6' : 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
+              style={{ background: "none", border: "none", cursor: "pointer", borderRadius: "50%", padding: "8px", display: "flex", alignItems: "center", justifyContent: "center", transition: "background-color 0.2s ease, transform 0.2s ease", color: isLoggedIn ? 'var(--text-h)' : 'var(--text)', ...(isLoggedIn ? { backgroundColor: 'var(--surface)' } : {}) }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface)'; e.currentTarget.style.transform = 'scale(1.1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = isLoggedIn ? 'var(--surface)' : 'transparent'; e.currentTarget.style.transform = 'scale(1)'; }}
               onClick={handleUserIconClick}
             >
-              <User size={20} color={isLoggedIn ? '#111111' : '#374151'} />
+              <User size={20} color="currentColor" />
             </button>
             {dropdownOpen && isLoggedIn && (
               <UserDropdown
@@ -978,12 +982,12 @@ const Home = () => {
       </nav>
 
       {/* Main Content */}
-      <div style={{ display: "flex", minHeight: "calc(100vh - 96px)", position: "relative", backgroundColor: "#f7f3f3", alignItems: "flex-start", paddingTop: "24px", animation: 'fadeInUp 0.8s ease forwards' }}>
+      <div style={{ display: "flex", minHeight: "calc(100vh - 96px)", position: "relative", backgroundColor: "var(--surface)", alignItems: "flex-start", paddingTop: "24px", animation: 'fadeInUp 0.8s ease forwards' }}>
         <div style={{ width: "50%", padding: "32px 32px 32px 10px", display: "flex", flexDirection: "column", justifyContent: "flex-start", paddingTop: "48px", opacity: showLeftSlide ? 1 : 0, transform: showLeftSlide ? "translateX(0)" : "translateX(-40px)", transition: "all 0.8s ease", zIndex: 10 }}>
-          <h1 style={{ fontSize: "60px", fontWeight: "700", color: "#090909", lineHeight: "1.1", marginBottom: "24px", marginTop: 0 }}>Find Your Sole Mate With Us</h1>
-          <p style={{ fontSize: "18px", marginBottom: "32px", maxWidth: "320px", lineHeight: "1.5", alignSelf: "center", textAlign: "center", color: "#000000" }}>"Step Into Comfort, Walk With Confidence."</p>
+          <h1 style={{ fontSize: "60px", fontWeight: "700", color: "var(--text-h)", lineHeight: "1.1", marginBottom: "24px", marginTop: 0 }}>Find Your Sole Mate With Us</h1>
+          <p style={{ fontSize: "18px", marginBottom: "32px", maxWidth: "320px", lineHeight: "1.5", alignSelf: "center", textAlign: "center", color: "var(--text)" }}>"Step Into Comfort, Walk With Confidence."</p>
           <button
-            style={{ backgroundColor: ctaHovered ? "#333333" : "#010000", color: "#fafafa", padding: "16px 40px", fontSize: "14px", fontWeight: "500", border: "none", cursor: "pointer", width: "fit-content", transition: "all 0.3s ease", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", alignSelf: "center", marginTop: "4px" }}
+            style={{ backgroundColor: ctaHovered ? "var(--text)" : "var(--text-h)", color: "var(--bg)", padding: "16px 40px", fontSize: "14px", fontWeight: "500", border: "none", cursor: "pointer", width: "fit-content", transition: "all 0.3s ease", boxShadow: "var(--shadow)", alignSelf: "center", marginTop: "4px" }}
             onMouseEnter={() => setCtaHovered(true)}
             onMouseLeave={() => setCtaHovered(false)}
             onClick={() => navigate("/best-selling")}
@@ -992,8 +996,8 @@ const Home = () => {
           </button>
         </div>
 
-        <div style={{ width: "50%", position: "relative", backgroundColor: "#f5f5f5", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px", padding: "24px", overflow: "hidden", transform: "translateY(-24px)" }}>
-          <div style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%) rotate(180deg)", pointerEvents: "none", userSelect: "none", fontSize: "120px", fontWeight: "900", color: "rgba(0, 0, 0, 0.12)", letterSpacing: "4px", whiteSpace: "nowrap", writingMode: "vertical-rl", textOrientation: "mixed", zIndex: 1 }}>Slick</div>
+        <div style={{ width: "50%", position: "relative", backgroundColor: "var(--surface)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px", padding: "24px", overflow: "hidden", transform: "translateY(-24px)" }}>
+          <div style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%) rotate(180deg)", pointerEvents: "none", userSelect: "none", fontSize: "120px", fontWeight: "900", color: "var(--border)", letterSpacing: "4px", whiteSpace: "nowrap", writingMode: "vertical-rl", textOrientation: "mixed", zIndex: 1 }}>Slick</div>
           <div
             role="button"
             tabIndex={0}
@@ -1015,8 +1019,8 @@ const Home = () => {
                   width: '40px',
                   height: '40px',
                   borderRadius: '50%',
-                  background: '#111',
-                  color: '#fff',
+                  background: 'var(--text-h)',
+                  color: 'var(--bg)',
                   border: 'none',
                   cursor: 'pointer',
                   display: 'flex',
@@ -1024,12 +1028,12 @@ const Home = () => {
                   justifyContent: 'center',
                   transition: 'all 0.2s ease',
                   zIndex: 10,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  boxShadow: 'var(--shadow)',
                   opacity: isProductHovered ? 1 : 0,
                   transform: isProductHovered ? 'scale(1)' : 'scale(0.8)',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = '#333'; e.currentTarget.style.transform = 'scale(1.1)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = '#111'; e.currentTarget.style.transform = 'scale(1)'; }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85'; e.currentTarget.style.transform = 'scale(1.1)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1)'; }}
                 onClick={(e) => {
                   e.stopPropagation();
                   addToCart(featuredProduct);
@@ -1041,8 +1045,8 @@ const Home = () => {
               </button>
             </div>
             <div style={{ position: 'relative', marginTop: '12px', textAlign: 'center' }}>
-              <div style={{ fontSize: "18px", color: "#666666", marginBottom: '8px', marginTop: 0, textAlign: 'center' }}>₹{featuredProduct.price}</div>
-              <div style={{ fontSize: "20px", fontWeight: "600", color: "#080808", marginBottom: 0, marginTop: 0, textAlign: 'center' }}>{featuredProduct.name}</div>
+              <div style={{ fontSize: "18px", color: "var(--text)", marginBottom: '8px', marginTop: 0, textAlign: 'center' }}>₹{featuredProduct.price}</div>
+              <div style={{ fontSize: "20px", fontWeight: "600", color: "var(--text-h)", marginBottom: 0, marginTop: 0, textAlign: 'center' }}>{featuredProduct.name}</div>
             </div>
           </div>
         </div>

@@ -7,6 +7,13 @@ import PaymentModal from './PaymentModel';
 const API_URL = 'http://localhost:8080/api/products';
 const token = localStorage.getItem('token');
 
+const toProductImageUrl = (imagePath) => {
+  if (!imagePath) return '/placeholder.png';
+  if (imagePath.startsWith('http') || imagePath.startsWith('data:')) return imagePath;
+  if (imagePath.startsWith('/')) return imagePath;
+  return `/${imagePath}`;
+};
+
 const getUser = () => {
   try {
     const raw = localStorage.getItem('user');
@@ -138,7 +145,7 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
                   }}
                 >
                   <img
-                    src={item.imageUrl || item.image || '/placeholder.png'}
+                    src={toProductImageUrl(item.imageUrl || item.image)}
                     alt={item.name}
                     style={{
                       width: '70px',
@@ -465,7 +472,7 @@ const BestSelling = () => {
 
               <div className="product-image-wrapper">
                 <img
-                  src={product.imageUrl || product.image || '/placeholder.png'}
+                  src={toProductImageUrl(product.imageUrl || product.image)}
                   alt={product.name}
                   className="product-image"
                   onError={(e) => { e.target.src = '/placeholder.png'; }}
@@ -500,7 +507,7 @@ const BestSelling = () => {
             </button>
 
             <div className="popup-image-wrapper">
-              <img src={selectedProduct.imageUrl || selectedProduct.image} alt={selectedProduct.name} className="popup-image" />
+              <img src={toProductImageUrl(selectedProduct.imageUrl || selectedProduct.image)} alt={selectedProduct.name} className="popup-image" onError={(e) => { e.currentTarget.src = '/placeholder.png'; }} />
             </div>
 
             <h3 className="popup-name">{selectedProduct.name}</h3>

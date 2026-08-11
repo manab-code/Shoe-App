@@ -13,6 +13,13 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
+  const ALLOWED_CATEGORIES = [
+    { value: 'bestselling', label: 'Bestselling' },
+    { value: 'man', label: 'Man' },
+    { value: 'women', label: 'Women' },
+    { value: 'children', label: 'Child' }
+  ];
+
   const API_URL = 'http://localhost:8080/api/products';
   const token = localStorage.getItem('token');
 
@@ -156,7 +163,6 @@ const AdminDashboard = () => {
                 { name: 'name', placeholder: 'Product Name', type: 'text' },
                 { name: 'description', placeholder: 'Description', type: 'text' },
                 { name: 'price', placeholder: 'Price ($)', type: 'number' },
-                { name: 'category', placeholder: 'Category (e.g. Sneakers)', type: 'text' },
                 { name: 'imageUrl', placeholder: 'Image URL', type: 'url' },
                 { name: 'stock', placeholder: 'Stock Quantity', type: 'number' }
               ].map((field) => (
@@ -174,6 +180,22 @@ const AdminDashboard = () => {
                   }}
                 />
               ))}
+
+              <select
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                required
+                style={{
+                  width: '100%', padding: '12px 16px', marginBottom: '12px',
+                  border: '1.5px solid #e0e0e0', borderRadius: '10px',
+                  fontSize: '14px', outline: 'none', fontFamily: 'inherit'
+                }}
+              >
+                <option value="">Select category</option>
+                {ALLOWED_CATEGORIES.map((category) => (
+                  <option key={category.value} value={category.value}>{category.label}</option>
+                ))}
+              </select>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button
                   type="submit"

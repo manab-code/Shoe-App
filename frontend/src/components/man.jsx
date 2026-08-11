@@ -13,6 +13,13 @@ const getUser = () => {
 const API_URL = 'http://localhost:8080/api/products';
 const token = localStorage.getItem('token');
 
+const toProductImageUrl = (imagePath) => {
+  if (!imagePath) return '/placeholder.png';
+  if (imagePath.startsWith('http') || imagePath.startsWith('data:')) return imagePath;
+  if (imagePath.startsWith('/')) return imagePath;
+  return `/${imagePath}`;
+};
+
 // ─── Cart Drawer ─────────────────────────────────────────────────────────────
 const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
   const drawerRef = useRef(null);
@@ -55,12 +62,12 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
           width: '100%',
           maxWidth: '420px',
           height: '100vh',
-          background: '#ffffff',
+          background: 'var(--bg)',
           zIndex: 1000,
           display: 'flex',
           flexDirection: 'column',
           animation: 'slideInRight 0.3s cubic-bezier(0.34,1.56,0.64,1)',
-          boxShadow: '-4px 0 24px rgba(0,0,0,0.1)',
+          boxShadow: 'var(--shadow)',
         }}
       >
         {/* Header */}
@@ -69,11 +76,11 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '20px 24px',
-          borderBottom: '1px solid #f0f0f0',
+          borderBottom: '1px solid var(--border)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <ShoppingCart size={22} color="#111" />
-            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#111' }}>
+            <ShoppingCart size={22} color="var(--text-h)" />
+            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-h)' }}>
               Your Cart ({cartItems.length})
             </h2>
           </div>
@@ -83,17 +90,17 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
               padding: '8px',
               borderRadius: '50%',
               border: 'none',
-              background: '#f3f4f6',
+              background: 'var(--surface)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               transition: 'background 0.2s',
             }}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#e5e7eb'}
-            onMouseLeave={(e) => e.currentTarget.style.background = '#f3f4f6'}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--border)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'var(--surface)'}
           >
-            <X size={18} color="#374151" />
+            <X size={18} color="var(--text)" />
           </button>
         </div>
 
@@ -107,9 +114,9 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
               justifyContent: 'center',
               height: '100%',
               gap: '16px',
-              color: '#9ca3af',
+              color: 'var(--text)',
             }}>
-              <ShoppingCart size={48} strokeWidth={1.5} />
+              <ShoppingCart size={48} strokeWidth={1.5} color="var(--text)" />
               <p style={{ margin: 0, fontSize: '15px', fontWeight: 500 }}>Your cart is empty</p>
               <p style={{ margin: 0, fontSize: '13px' }}>Add items to see them here</p>
             </div>
@@ -123,13 +130,13 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
                     gap: '14px',
                     padding: '14px',
                     borderRadius: '14px',
-                    background: '#fafafa',
-                    border: '1px solid #f0f0f0',
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
                     transition: 'transform 0.2s, box-shadow 0.2s',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)';
+                    e.currentTarget.style.boxShadow = 'var(--shadow)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'translateY(0)';
@@ -137,26 +144,26 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
                   }}
                 >
                   <img
-                    src={item.imageUrl || item.image || '/placeholder.png'}
+                    src={toProductImageUrl(item.imageUrl || item.image)}
                     alt={item.name}
                     style={{
                       width: '70px',
                       height: '70px',
                       objectFit: 'contain',
                       borderRadius: '10px',
-                      background: '#fff',
+                      background: 'var(--bg)',
                     }}
                     onError={(e) => { e.target.src = '/placeholder.png'; }}
                   />
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                    <h4 style={{ margin: '0 0 6px', fontSize: '14px', fontWeight: 600, color: '#111' }}>
+                    <h4 style={{ margin: '0 0 6px', fontSize: '14px', fontWeight: 600, color: 'var(--text-h)' }}>
                       {item.name}
                     </h4>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '14px', fontWeight: 700, color: '#111' }}>
+                      <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-h)' }}>
                         ₹{item.price}
                       </span>
-                      <span style={{ fontSize: '12px', color: '#9ca3af', textDecoration: 'line-through' }}>
+                      <span style={{ fontSize: '12px', color: 'var(--text)', textDecoration: 'line-through' }}>
                         ₹{item.oldPrice || item.price * 1.2}
                       </span>
                     </div>
@@ -191,8 +198,8 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
         {cartItems.length > 0 && (
           <div style={{
             padding: '20px 24px',
-            borderTop: '1px solid #f0f0f0',
-            background: '#fafafa',
+            borderTop: '1px solid var(--border)',
+            background: 'var(--surface)',
           }}>
             <div style={{
               display: 'flex',
@@ -200,8 +207,8 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
               alignItems: 'center',
               marginBottom: '16px',
             }}>
-              <span style={{ fontSize: '14px', color: '#666', fontWeight: 500 }}>Total Items</span>
-              <span style={{ fontSize: '16px', fontWeight: 700, color: '#111' }}>{cartItems.length}</span>
+              <span style={{ fontSize: '14px', color: 'var(--muted-text)', fontWeight: 500 }}>Total Items</span>
+              <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-h)' }}>{cartItems.length}</span>
             </div>
             <button
               style={{
@@ -209,16 +216,16 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
                 padding: '14px',
                 borderRadius: '12px',
                 border: 'none',
-                background: '#111',
-                color: '#fff',
+                background: 'var(--text-h)',
+                color: 'var(--bg)',
                 fontSize: '15px',
                 fontWeight: 600,
                 cursor: 'pointer',
                 fontFamily: 'Poppins, sans-serif',
                 transition: 'background 0.2s, transform 0.15s',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = '#333'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = '#111'; e.currentTarget.style.transform = 'translateY(0)'; }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--text)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--text-h)'; e.currentTarget.style.transform = 'translateY(0)'; }}
             >
               Checkout
             </button>
@@ -245,10 +252,8 @@ const Man = () => {
   const user = getUser();
   const isAdmin = user?.role === 'admin';
 
-  // Fetch products from API (seeded data)
   useEffect(() => {
     fetchProducts();
-    // Load cart from localStorage on mount
     const items = JSON.parse(localStorage.getItem('cartItems')) || [];
     setCartItems(items);
     setCartCount(items.length);
@@ -281,7 +286,7 @@ const Man = () => {
       if (data.success) {
         setDeleteMessage('Product deleted!');
         setTimeout(() => setDeleteMessage(''), 2000);
-        fetchProducts(); // Refresh list
+        fetchProducts();
       } else {
         alert(data.message || 'Failed to delete');
       }
@@ -294,12 +299,9 @@ const Man = () => {
     const existingCart = JSON.parse(localStorage.getItem('cartItems')) || [];
     const updatedCart = [...existingCart, { ...product, cartId: Date.now() }];
     localStorage.setItem('cartItems', JSON.stringify(updatedCart));
-
     window.dispatchEvent(new Event('cartUpdated'));
-
     setCartItems(updatedCart);
     setCartCount(updatedCart.length);
-
     setAddedMessage('Added to cart!');
     setTimeout(() => {
       setAddedMessage('');
@@ -315,12 +317,12 @@ const Man = () => {
     window.dispatchEvent(new Event('cartUpdated'));
   };
 
-  if (loading) return <div style={{ textAlign: 'center', padding: '60px' }}>Loading...</div>;
+  if (loading) return <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text)' }}>Loading...</div>;
 
   return (
     <>
       <style>{`
-        body, #root { background: #ffffff; }
+        body, #root { background: var(--bg); }
 
         .men-section {
           width: 100%;
@@ -328,7 +330,7 @@ const Man = () => {
           margin: 0 auto;
           padding: 32px 24px 48px;
           position: relative;
-          background: #ffffff;
+          background: var(--bg);
         }
 
         .men-back-arrow {
@@ -336,7 +338,7 @@ const Man = () => {
           top: 24px;
           left: 24px;
           background: transparent;
-          color: #111111;
+          color: var(--text-h);
           border: none;
           padding: 0;
           z-index: 10;
@@ -362,14 +364,14 @@ const Man = () => {
         .men-title {
           font-size: 28px;
           font-weight: 700;
-          color: #111;
+          color: var(--text-h);
           margin: 0;
         }
 
         .men-cart-btn {
           position: relative;
           padding: 10px;
-          background: #f9fafd;
+          background: var(--surface);
           border: none;
           border-radius: 50%;
           cursor: pointer;
@@ -380,7 +382,7 @@ const Man = () => {
         }
 
         .men-cart-btn:hover {
-          background: #e5e7eb;
+          background: var(--border);
           transform: scale(1.05);
         }
 
@@ -397,8 +399,8 @@ const Man = () => {
           border-radius: 50%;
           display: flex;
           align-items: center;
-          justifyContent: center;
-          border: 2px solid #fff;
+          justify-content: center;
+          border: 2px solid var(--bg);
         }
 
         .men-cards-grid {
@@ -410,10 +412,10 @@ const Man = () => {
         }
 
         .men-product-card {
-          background: #f7f6f6;
+          background: var(--surface);
           border-radius: 24px;
-          box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
-          border: 1px solid rgba(229, 231, 235, 0.8);
+          box-shadow: var(--shadow);
+          border: 1px solid var(--border);
           overflow: hidden;
           position: relative;
           transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -429,7 +431,7 @@ const Man = () => {
 
         .men-product-card:hover {
           transform: translateY(-6px);
-          box-shadow: 0 28px 60px rgba(15, 23, 42, 0.12);
+          box-shadow: var(--shadow);
         }
 
         .men-product-image-wrapper {
@@ -445,8 +447,8 @@ const Man = () => {
           position: absolute;
           top: 20px;
           left: 20px;
-          background: #0a0909;
-          color: #f9f7f7;
+          background: var(--text-h);
+          color: var(--bg);
           padding: 6px 12px;
           font-size: 10px;
           font-weight: 700;
@@ -479,7 +481,7 @@ const Man = () => {
         .men-product-name {
           font-size: 16px;
           font-weight: 700;
-          color: #111827;
+          color: var(--text-h);
           margin-bottom: 16px;
         }
 
@@ -493,12 +495,12 @@ const Man = () => {
         .men-product-price {
           font-size: 18px;
           font-weight: 700;
-          color: #111827;
+          color: var(--text-h);
         }
 
         .men-product-old-price {
           font-size: 14px;
-          color: #6b7280;
+          color: var(--text);
           text-decoration: line-through;
         }
 
@@ -509,8 +511,8 @@ const Man = () => {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          background: #080808;
-          color: #f9f3f3;
+          background: var(--text-h);
+          color: var(--bg);
           cursor: pointer;
           border: none;
           transition: background-color 0.25s ease, transform 0.25s ease;
@@ -520,7 +522,7 @@ const Man = () => {
         }
 
         .men-card-action:hover {
-          background: #1f2937;
+          background: var(--text);
           transform: scale(1.05);
         }
 
@@ -536,8 +538,8 @@ const Man = () => {
         }
 
         .men-popup {
-          background: #ffffff;
-          border: 1px solid #e5e7eb;
+          background: var(--bg);
+          border: 1px solid var(--border);
           border-radius: 16px;
           padding: 24px;
           width: 100%;
@@ -547,7 +549,7 @@ const Man = () => {
           flex-direction: column;
           align-items: center;
           text-align: center;
-          box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+          box-shadow: var(--shadow);
         }
 
         .men-popup-close {
@@ -558,17 +560,17 @@ const Man = () => {
           height: 28px;
           border-radius: 50%;
           border: none;
-          background: #f3f4f6;
+          background: var(--surface);
           display: inline-flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          color: #111827;
+          color: var(--text-h);
           line-height: 1;
           transition: background-color 0.2s ease;
         }
 
-        .men-popup-close:hover { background: #e5e7eb; }
+        .men-popup-close:hover { background: var(--border); }
 
         .men-popup-image-wrapper {
           width: 100%;
@@ -587,7 +589,7 @@ const Man = () => {
         .men-popup-name {
           font-size: 16px;
           font-weight: 700;
-          color: #111827;
+          color: var(--text-h);
           margin-bottom: 8px;
         }
 
@@ -602,12 +604,12 @@ const Man = () => {
         .men-popup-price {
           font-size: 16px;
           font-weight: 700;
-          color: #111827;
+          color: var(--text-h);
         }
 
         .men-popup-old-price {
           font-size: 13px;
-          color: #6b7280;
+          color: var(--text);
           text-decoration: line-through;
         }
 
@@ -623,9 +625,9 @@ const Man = () => {
           width: 100%;
           padding: 12px 0;
           border-radius: 999px;
-          border: 1px solid #111827;
-          background: #ffffff;
-          color: #111827;
+          border: 1px solid var(--text-h);
+          background: var(--bg);
+          color: var(--text-h);
           font-size: 14px;
           font-weight: 600;
           cursor: pointer;
@@ -634,8 +636,8 @@ const Man = () => {
 
         .men-popup-buy-now:hover,
         .men-popup-add-cart:hover {
-          background: #111827;
-          color: #ffffff;
+          background: var(--text-h);
+          color: var(--bg);
         }
 
         .men-added-msg {
@@ -691,7 +693,7 @@ const Man = () => {
             onClick={() => setCartOpen(true)}
             aria-label="Open cart"
           >
-            <ShoppingCart size={22} color="#374151" />
+            <ShoppingCart size={22} color="var(--text)" />
             {cartCount > 0 && (
               <span className="men-cart-badge">{cartCount}</span>
             )}
@@ -711,7 +713,7 @@ const Man = () => {
 
         <div className="men-cards-grid">
           {products.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#999', gridColumn: '1 / -1', padding: '40px' }}>
+            <p style={{ textAlign: 'center', color: 'var(--muted-text)', gridColumn: '1 / -1', padding: '40px' }}>
               No products available. {isAdmin && 'Add products from Admin Dashboard.'}
             </p>
           ) : (
@@ -751,7 +753,7 @@ const Man = () => {
                 <div className="men-product-image-wrapper">
                   {product.isNew && <span className="men-new-badge">NEW</span>}
                   <img
-                    src={product.imageUrl || product.image || '/placeholder.png'}
+                    src={toProductImageUrl(product.imageUrl || product.image)}
                     alt={product.name}
                     className="men-product-image"
                     onError={(e) => {
@@ -795,7 +797,7 @@ const Man = () => {
 
               <div className="men-popup-image-wrapper">
                 <img
-                  src={selectedProduct.imageUrl || selectedProduct.image}
+                  src={toProductImageUrl(selectedProduct.imageUrl || selectedProduct.image)}
                   alt={selectedProduct.name}
                   className="men-popup-image"
                   onError={(e) => {

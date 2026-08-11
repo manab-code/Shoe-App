@@ -1,6 +1,3 @@
-// ═══════════════════════════════════════════════════════════════
-// server.js  (BACKEND — Node.js + Express + MongoDB)
-// ═══════════════════════════════════════════════════════════════
 
 const express = require("express");
 const mongoose = require("mongoose");
@@ -55,12 +52,12 @@ const isSignedIn = async (req, res, next) => {
 
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, JWT_SECRET);
-    
+
     const user = await User.findById(decoded.id || decoded.userId);
     if (!user) {
       return res.status(401).json({ success: false, message: 'User not found' });
     }
-    
+
     req.user = user;
     next();
   } catch (err) {
@@ -442,9 +439,21 @@ app.get("/api/products", async (req, res) => {
   }
 });
 
+const allowedCategories = new Set(['bestselling', 'man', 'women', 'children']);
+
 app.post("/api/products", adminOnly, async (req, res) => {
   try {
-    const product = await Product.create(req.body);
+    const incomingCategory = String(req.body.category || '').trim().toLowerCase();
+    if (!allowedCategories.has(incomingCategory)) {
+      return res.status(400).json({ success: false, message: 'Invalid category. Allowed: bestselling, man, women, children' });
+    }
+
+    const productPayload = {
+      ...req.body,
+      category: incomingCategory
+    };
+
+    const product = await Product.create(productPayload);
     res.status(201).json({ success: true, product });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -453,7 +462,17 @@ app.post("/api/products", adminOnly, async (req, res) => {
 
 app.put("/api/products/:id", adminOnly, async (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const incomingCategory = String(req.body.category || '').trim().toLowerCase();
+    if (req.body.category && !allowedCategories.has(incomingCategory)) {
+      return res.status(400).json({ success: false, message: 'Invalid category. Allowed: bestselling, man, women, children' });
+    }
+
+    const productPayload = {
+      ...req.body,
+      ...(req.body.category ? { category: incomingCategory } : {})
+    };
+
+    const product = await Product.findByIdAndUpdate(req.params.id, productPayload, { new: true });
     if (!product) return res.status(404).json({ success: false, message: 'Not found' });
     res.json({ success: true, product });
   } catch (err) {
@@ -481,7 +500,7 @@ app.post("/api/seed", async (req, res) => {
     { name: 'Sneaker Shoe for Man', price: 2999, oldPrice: 4999, imageUrl: '/snekerblue.png', category: 'bestselling', stock: 10 },
     { name: 'Trendy Slick Shoe', price: 3999, oldPrice: 4999, imageUrl: '/whiteshoe2.png', category: 'bestselling', stock: 10 },
     { name: 'Slick Running', price: 2999, oldPrice: 4999, imageUrl: '/slick.png', category: 'bestselling', stock: 10 },
-    { name: 'Formal Canvas Shoe', price: 2999, oldPrice: 4999, imageUrl: 'canvasshoe.png', category: 'bestselling', stock: 10 },
+    { name: 'Formal Canvas Shoe', price: 2999, oldPrice: 4999, imageUrl: '/canvasshoe.png', category: 'bestselling', stock: 10 },
     { name: 'Running Shoe', price: 2999, oldPrice: 4999, imageUrl: '/running.png', category: 'bestselling', stock: 10 },
   ];
 
@@ -499,7 +518,7 @@ app.post("/api/seed/man", async (req, res) => {
     { name: 'Running Shoe', price: 2999, oldPrice: 4999, imageUrl: '/running.png', category: 'man', stock: 10 },
     { name: 'Black Shoe', price: 5999, oldPrice: 6999, imageUrl: '/black.png', category: 'man', stock: 10 },
     { name: 'Trendy Slick Pro', price: 3999, oldPrice: 4999, imageUrl: '/whiteshoe2.png', category: 'man', stock: 10 },
-    { name: 'Formal Canvas Shoe', price: 2999, oldPrice: 4999, imageUrl: 'canvasshoe.png', category: 'man', stock: 10 },
+    { name: 'Formal Canvas Shoe', price: 2999, oldPrice: 4999, imageUrl: '/canvasshoe.png', category: 'man', stock: 10 },
     { name: 'Babal Shoe', price: 3000, oldPrice: 4999, imageUrl: '/babal.png', category: 'man', stock: 10 },
     { name: 'Arke Shoe', price: 4000, oldPrice: 5000, imageUrl: '/arke.png', category: 'man', stock: 10 },
   ];
@@ -534,12 +553,12 @@ app.post("/api/seed/women", async (req, res) => {
 
 app.post("/api/seed/children", async (req, res) => {
   const seedProducts = [
-    { name: 'Cartoon Shoe', price: 2200, oldPrice: 3999, imageUrl: 'cartoon.png', category: 'children', stock: 10 },
-    { name: 'Lightning Shoe', price: 2500, oldPrice: 3999, imageUrl: 'lightning.png', category: 'children', stock: 10 },
-    { name: 'Superman Shoe', price: 3000, oldPrice: 3799, imageUrl: 'superman.png', category: 'children', stock: 10 },
-    { name: 'Comfort Shoe', price: 1500, oldPrice: 2999, imageUrl: 'comfort.png', category: 'children', stock: 10 },
-    { name: 'Adidas Shoe', price: 1500, oldPrice: 2999, imageUrl: 'adikid.png', category: 'children', stock: 10 },
-    { name: 'Grey Shoe', price: 1800, oldPrice: 3499, imageUrl: 'greykid.png', category: 'children', stock: 10 },
+    { name: 'Cartoon Shoe', price: 2200, oldPrice: 3999, imageUrl: '/cartoon.png', category: 'children', stock: 10 },
+    { name: 'Lightning Shoe', price: 2500, oldPrice: 3999, imageUrl: '/lightning.png', category: 'children', stock: 10 },
+    { name: 'Superman Shoe', price: 3000, oldPrice: 3799, imageUrl: '/superman.png', category: 'children', stock: 10 },
+    { name: 'Comfort Shoe', price: 1500, oldPrice: 2999, imageUrl: '/comfort.png', category: 'children', stock: 10 },
+    { name: 'Adidas Shoe', price: 1500, oldPrice: 2999, imageUrl: '/adikid.png', category: 'children', stock: 10 },
+    { name: 'Grey Shoe', price: 1800, oldPrice: 3499, imageUrl: '/greykid.png', category: 'children', stock: 10 },
   ];
 
   try {

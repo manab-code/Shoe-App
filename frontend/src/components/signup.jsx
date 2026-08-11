@@ -1,8 +1,3 @@
-// src/pages/SignUp.jsx
-// Email signup → Node.js /api/auth/signup
-// Google/Facebook signup → Node.js /api/auth/google & /api/auth/facebook
-// NEVER calls Apps Script directly
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BACKEND_URL, GOOGLE_CLIENT_ID, FACEBOOK_APP_ID } from '../config/api';
@@ -16,6 +11,82 @@ const SignUp = () => {
   const [loading, setLoading] = useState(false);
   const [welcomeMsg, setWelcomeMsg] = useState('');
   const [error, setError] = useState('');
+  const [googleReady, setGoogleReady] = useState(false);
+  const [fbReady, setFbReady] = useState(false);
+  const [oauthConfigError, setOauthConfigError] = useState('');
+
+  // ─── OAuth SDK Loading ──────────────────────────────────────────────────
+  useEffect(() => {
+    const errors = [];
+
+    // Validate credentials before attempting to load SDKs
+    if (!GOOGLE_CLIENT_ID) errors.push('Google Client ID is missing');
+    if (!FACEBOOK_APP_ID) errors.push('Facebook App ID is missing');
+    if (errors.length > 0) {
+      setOauthConfigError(errors.join(' • '));
+      return;
+    }
+
+    // ── Google SDK ──
+    let googleScript = null;
+    if (!window.google) {
+      googleScript = document.createElement('script');
+      googleScript.src = 'https://accounts.google.com/gsi/client';
+      googleScript.async = true;
+      googleScript.defer = true;
+      googleScript.onload = () => setGoogleReady(true);
+      googleScript.onerror = () => {
+        console.error('Failed to load Google SDK');
+        setGoogleReady(false);
+      };
+      document.body.appendChild(googleScript);
+    } else {
+      setGoogleReady(true);
+    }
+
+    // ── Facebook SDK ──
+    // fbAsyncInit MUST be defined BEFORE the script is appended.
+    // The SDK checks for this global immediately upon load.
+    window.fbAsyncInit = () => {
+      try {
+        window.FB.init({
+          appId: FACEBOOK_APP_ID,
+          cookie: true,
+          xfbml: true,
+          version: 'v18.0',
+        });
+        setFbReady(true);
+      } catch (err) {
+        console.error('Facebook SDK init failed:', err);
+        setFbReady(false);
+      }
+    };
+
+    let fbScript = null;
+    if (!window.FB) {
+      fbScript = document.createElement('script');
+      fbScript.src = 'https://connect.facebook.net/en_US/sdk.js';
+      fbScript.async = true;
+      fbScript.defer = true;
+      fbScript.crossOrigin = 'anonymous';
+      fbScript.onerror = () => {
+        console.error('Failed to load Facebook SDK');
+        setFbReady(false);
+      };
+      document.body.appendChild(fbScript);
+    } else {
+      setFbReady(true);
+    }
+
+    return () => {
+      if (googleScript && document.body.contains(googleScript)) {
+        document.body.removeChild(googleScript);
+      }
+      if (fbScript && document.body.contains(fbScript)) {
+        document.body.removeChild(fbScript);
+      }
+    };
+  }, []);
 
   const handleSignUp = async (e) => {
     e.preventDefault();
@@ -45,21 +116,42 @@ const SignUp = () => {
   };
 
   const handleGoogleSignUp = () => {
-    if (!window.google) { alert('Google SDK not loaded yet. Please wait...'); return; }
+    if (!GOOGLE_CLIENT_ID) {
+      setError('Google OAuth is not configured.');
+      return;
+    }
+    if (!googleReady || !window.google) {
+      setError('Google SDK is still loading. Please wait a moment and try again.');
+      return;
+    }
 
     const client = window.google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_CLIENT_ID,
       scope: 'email profile',
       callback: async (tokenResponse) => {
+        if (tokenResponse.error) {
+          setError(`Google signup error: ${tokenResponse.error}`);
+          return;
+        }
         try {
           const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
             headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
           }).then((res) => res.json());
 
+          if (!userInfo.email) {
+            setError('Google did not provide an email address.');
+            return;
+          }
+
           const response = await fetch(`${BACKEND_URL}/api/auth/google`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: userInfo.name, email: userInfo.email, googleId: userInfo.sub, picture: userInfo.picture }),
+            body: JSON.stringify({
+              name: userInfo.name,
+              email: userInfo.email,
+              googleId: userInfo.sub,
+              picture: userInfo.picture,
+            }),
           });
 
           const data = await response.json();
@@ -68,25 +160,50 @@ const SignUp = () => {
             localStorage.setItem('user', JSON.stringify(data.user));
             setWelcomeMsg(`Welcome ${data.user.name}! ${data.message} 👟`);
             setTimeout(() => navigate('/'), 1500);
-          } else { alert(data.message); }
-        } catch (err) { alert('Google signup failed: ' + err.message); }
+          } else {
+            setError(data.message || 'Google signup failed on the server.');
+          }
+        } catch (err) {
+          console.error('Google signup error:', err);
+          setError('Google signup failed. Please try again.');
+        }
       },
     });
     client.requestAccessToken();
   };
 
   const handleFacebookSignUp = () => {
-    if (!window.FB) { alert('Facebook SDK not loaded yet. Please wait...'); return; }
+    if (!FACEBOOK_APP_ID) {
+      setError('Facebook OAuth is not configured.');
+      return;
+    }
+    if (!fbReady || !window.FB) {
+      setError('Facebook SDK is still loading. Please wait a moment and try again.');
+      return;
+    }
 
     window.FB.login(
       (response) => {
         if (response.authResponse) {
           window.FB.api('/me', { fields: 'name,email,picture' }, async (userInfo) => {
+            if (!userInfo || userInfo.error) {
+              setError('Failed to retrieve Facebook user info.');
+              return;
+            }
+            if (!userInfo.email) {
+              setError('Facebook did not provide an email address. Please ensure your Facebook account has an email and you have granted permission.');
+              return;
+            }
             try {
               const res = await fetch(`${BACKEND_URL}/api/auth/facebook`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: userInfo.name, email: userInfo.email, facebookId: userInfo.id, picture: userInfo.picture?.data?.url }),
+                body: JSON.stringify({
+                  name: userInfo.name,
+                  email: userInfo.email,
+                  facebookId: userInfo.id,
+                  picture: userInfo.picture?.data?.url,
+                }),
               });
 
               const data = await res.json();
@@ -95,36 +212,21 @@ const SignUp = () => {
                 localStorage.setItem('user', JSON.stringify(data.user));
                 setWelcomeMsg(`Welcome ${data.user.name}! ${data.message} 👟`);
                 setTimeout(() => navigate('/'), 1500);
-              } else { alert(data.message); }
-            } catch (err) { alert('Facebook signup failed: ' + err.message); }
+              } else {
+                setError(data.message || 'Facebook signup failed on the server.');
+              }
+            } catch (err) {
+              console.error('Facebook signup error:', err);
+              setError('Facebook signup failed. Please try again.');
+            }
           });
-        } else { alert('Facebook login was cancelled'); }
+        } else {
+          setError('Facebook login was cancelled or permissions were denied.');
+        }
       },
-      { scope: 'public_profile' }
+      { scope: 'email,public_profile' }
     );
   };
-
-  useEffect(() => {
-    const googleScript = document.createElement('script');
-    googleScript.src = 'https://accounts.google.com/gsi/client';
-    googleScript.async = true; googleScript.defer = true;
-    document.body.appendChild(googleScript);
-
-    const fbScript = document.createElement('script');
-    fbScript.src = 'https://connect.facebook.net/en_US/sdk.js';
-    fbScript.async = true; fbScript.defer = true; fbScript.crossOrigin = 'anonymous';
-    fbScript.onload = () => {
-      window.fbAsyncInit = () => {
-        window.FB.init({ appId: FACEBOOK_APP_ID || '0', cookie: true, xfbml: true, version: 'v18.0' });
-      };
-    };
-    document.body.appendChild(fbScript);
-
-    return () => {
-      document.body.removeChild(googleScript);
-      document.body.removeChild(fbScript);
-    };
-  }, []);
 
   return (
     <>
@@ -135,6 +237,7 @@ const SignUp = () => {
         .signup-title { text-align: center; margin-bottom: 25px; font-size: 32px; font-weight: bold; }
         .social-btn { width: 100%; padding: 14px; border: none; border-radius: 10px; margin-bottom: 12px; cursor: pointer; font-size: 15px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.2s, box-shadow 0.2s; }
         .social-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .social-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .facebook-btn { background: #1877f2; color: white; }
         .google-btn { background: white; border: 1.5px solid #ddd; color: #333; }
         .divider { text-align: center; margin: 24px 0; color: #888; font-size: 13px; font-weight: bold; letter-spacing: 1px; }
@@ -157,12 +260,28 @@ const SignUp = () => {
         <div className="signup-card">
           <h1 className="signup-title">Welcome Back!</h1>
 
-          <button type="button" className="social-btn facebook-btn" onClick={handleFacebookSignUp}>
+          {oauthConfigError && (
+            <div className="error-text">OAuth config error: {oauthConfigError}</div>
+          )}
+
+          <button
+            type="button"
+            className="social-btn facebook-btn"
+            onClick={handleFacebookSignUp}
+            disabled={!fbReady || !!oauthConfigError}
+            title={!fbReady ? 'Facebook SDK loading…' : 'Continue with Facebook'}
+          >
             <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg>
             Continue with Facebook
           </button>
 
-          <button type="button" className="social-btn google-btn" onClick={handleGoogleSignUp}>
+          <button
+            type="button"
+            className="social-btn google-btn"
+            onClick={handleGoogleSignUp}
+            disabled={!googleReady || !!oauthConfigError}
+            title={!googleReady ? 'Google SDK loading…' : 'Continue with Google'}
+          >
             <svg width="20" height="20" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />

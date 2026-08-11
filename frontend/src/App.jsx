@@ -1,5 +1,6 @@
 ﻿import { Routes, Route, Navigate } from "react-router-dom"
 import { useAuth } from "./context/AuthContext.jsx"
+import { ThemeProvider } from "./context/ThemeContext.jsx"
 
 import Home from "./components/Home.jsx"
 import BestSelling from "./components/bestselling.jsx"
@@ -18,8 +19,6 @@ import PaymentFailed from "./components/PaymentFailed.jsx"
 
 import UserDashboard from "./components/UserDashboard.jsx"
 import AdminDashboard from "./components/AdminDashboard.jsx"
-
-
 
 const PrivateRoute = ({ children, adminOnly = false }) => {
   const { user, loading, isAdmin } = useAuth()
@@ -41,36 +40,38 @@ const PrivateRoute = ({ children, adminOnly = false }) => {
 
 const App = () => {
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/best-selling" element={<BestSelling />} />
-      <Route path="/man" element={<Man />} />
-      <Route path="/women" element={<Women />} />
-      <Route path="/children" element={<Children />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
-<Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/payment/success" element={<PaymentSuccess />} />
-      <Route path="/payment/failed" element={<PaymentFailed />} />
-      <Route
-        path="/store"
-        element={
-          <PrivateRoute>
-            <UserDashboard />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/dashboard"
-        element={
-          <PrivateRoute adminOnly={true}>
-            <AdminDashboard />
-          </PrivateRoute>
-        }
-      />
-      <Route path="*" element={<h1>404 - Page Not Found</h1>} />
-    </Routes>
+    <ThemeProvider>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/best-selling" element={<BestSelling />} />
+        <Route path="/man" element={<Man />} />
+        <Route path="/women" element={<Women />} />
+        <Route path="/children" element={<Children />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment/failed" element={<PaymentFailed />} />
+        <Route
+          path="/store"
+          element={
+            <PrivateRoute>
+              <UserDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute adminOnly={true}>
+              <AdminDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route path="*" element={<h1>404 - Page Not Found</h1>} />
+      </Routes>
+    </ThemeProvider>
   )
 }
 
