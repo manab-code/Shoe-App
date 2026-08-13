@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const Order = require('../models/order');
-const Payment = require('../models/payment');
+const Payment = require('../models/Payment');
 
 const ESEWA_CONFIG = {
   MERCHANT_CODE: process.env.ESEWA_MERCHANT_CODE,
