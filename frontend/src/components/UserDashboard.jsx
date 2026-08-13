@@ -10,7 +10,7 @@ const UserDashboard = () => {
   const [category, setCategory] = useState('all');
   const [loading, setLoading] = useState(true);
 
-  const API_URL = 'http://localhost:8080/api/products';
+  const API_URL = 'https://shoe-app-atjk.onrender.com/api/products';
 
   useEffect(() => {
     fetchProducts();

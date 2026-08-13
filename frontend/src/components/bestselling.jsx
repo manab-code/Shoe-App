@@ -4,7 +4,7 @@ import { ArrowUpRight, X, ShoppingCart, Trash2 } from 'lucide-react';
 import './bestselling.css';
 import PaymentModal from './PaymentModel';
 
-const API_URL = 'http://localhost:8080/api/products';
+const API_URL = 'https://shoe-app-atjk.onrender.com/api/products';
 const token = localStorage.getItem('token');
 
 const toProductImageUrl = (imagePath) => {

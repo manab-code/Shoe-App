@@ -10,7 +10,7 @@ const getUser = () => {
   } catch { return null; }
 };
 
-const API_URL = 'http://localhost:8080/api/products';
+const API_URL = 'https://shoe-app-atjk.onrender.com/api/products';
 const token = localStorage.getItem('token');
 
 const toProductImageUrl = (imagePath) => {

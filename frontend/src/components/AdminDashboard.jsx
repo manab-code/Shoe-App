@@ -20,7 +20,7 @@ const AdminDashboard = () => {
     { value: 'children', label: 'Child' }
   ];
 
-  const API_URL = 'http://localhost:8080/api/products';
+  const API_URL = 'https://shoe-app-atjk.onrender.com/api/products';
   const token = localStorage.getItem('token');
 
   useEffect(() => {
