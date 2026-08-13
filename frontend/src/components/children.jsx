@@ -261,15 +261,20 @@ const Children = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch(`${API_URL}?category=children`);
+      // 🔥 FIX: Add cache-busting to prevent 304 empty response
+      const res = await fetch(`${API_URL}?category=children&t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' }
+      });
       const data = await res.json();
+      console.log('Children API response:', data); // Debug log
       if (data.success) {
-        setProducts(data.products);
+        setProducts(data.products || []);
       } else {
         setProducts([]);
       }
     } catch (err) {
-      console.error('Failed to load products:', err);
+      console.error('Failed to load children products:', err);
       setProducts([]);
     }
     setLoading(false);
@@ -473,7 +478,7 @@ const Children = () => {
         .children-product-details {
           padding: 24px;
           display: flex;
-          flex-direction: column;
+          flex-direction: 'column';
           justify-content: space-between;
           flex: 1;
         }
