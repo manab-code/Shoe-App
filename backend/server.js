@@ -13,7 +13,7 @@ app.use(cors());
 
 const PORT = process.env.PORT || 8080;
 const JWT_SECRET = process.env.JWT_SECRET || "mysecretkey";
-const User = require("./Models/User");
+const User = require("./models/User");
 
 // ─── OTP Store (use Redis in production) ────────────────────────────────────
 const otpStore = new Map();
@@ -23,7 +23,7 @@ function generateOTP() {
 }
 
 // ─── Load Payment Controller ─────────────────────────────────────────────
-const paymentController = require("./controllers/payment");
+const paymentController = require("./controllers/Payment");
 
 // DEBUG: Verify controller loaded correctly
 console.log('Payment controller loaded:', Object.keys(paymentController));
