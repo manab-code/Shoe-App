@@ -13,7 +13,7 @@ app.use(cors());
 
 const PORT = process.env.PORT || 8080;
 const JWT_SECRET = process.env.JWT_SECRET || "mysecretkey";
-const User = require("./models/User");
+const User = require("./Models/User");
 
 // ─── OTP Store (use Redis in production) ────────────────────────────────────
 const otpStore = new Map();
